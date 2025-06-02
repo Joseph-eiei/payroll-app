@@ -20,8 +20,8 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
             localStorage.setItem('adminToken', response.data.token);
             const adminData = response.data.admin;
             localStorage.setItem('adminUser', JSON.stringify(adminData));
-            setIsAdminLoggedIn(true); // Update App.js state
-            setAdminUser(adminData);    // Update App.js state
+            setIsAdminLoggedIn(true);
+            setAdminUser(adminData);
             navigate('/admin/employees');
         } catch (err) {
             if (err.response && err.response.data && err.response.data.msg) {
@@ -34,7 +34,7 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700 p-4">
+        <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700 p-4 font-sans">
             <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md">
                 <h2 className="text-3xl font-bold text-center text-slate-800 mb-8">ผู้ดูแลระบบ</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -47,7 +47,7 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
                             id="username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                            className="text-gray-900 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                             required
                         />
                     </div>
@@ -60,7 +60,7 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                            className="text-gray-900 mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                             required
                         />
                     </div>
@@ -83,5 +83,4 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
         </div>
     );
 }
-
 export default AdminLoginPage;
