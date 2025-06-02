@@ -1,0 +1,322 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios'; // Assuming you might use axios later for fetching employees/supervisors
+
+function AttendancePage() {
+  const [siteName, setSiteName] = useState('');
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().slice(0, 10));
+  const [siteSupervisor, setSiteSupervisor] = useState('');
+  const [supervisorCheckIn, setSupervisorCheckIn] = useState('');
+  const [supervisorCheckOut, setSupervisorCheckOut] = useState('');
+  const [supervisorOT, setSupervisorOT] = useState('');
+  const [supervisorRemarks, setSupervisorRemarks] = useState('');
+  const [imageAttachment, setImageAttachment] = useState(null);
+
+  const [employeeAttendances, setEmployeeAttendances] = useState([
+    { employeeId: '', employeeName: '', checkIn: '', checkOut: '', otHours: '', remarks: '' },
+  ]);
+
+  const [availableSupervisors, setAvailableSupervisors] = useState([]);
+  const [availableEmployees, setAvailableEmployees] = useState([]);
+
+  // Fetch supervisors and employees for dropdowns
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        // Replace with your actual API calls. Ensure these are protected if needed.
+        // For now, using placeholder data.
+        // const supervisorsRes = await axios.get('/api/employees?role=supervisor');
+        // const employeesRes = await axios.get('/api/employees?role=employee');
+        // setAvailableSupervisors(supervisorsRes.data);
+        // setAvailableEmployees(employeesRes.data);
+
+        // Placeholder data:
+        setAvailableSupervisors([{id: 'S1', first_name: 'สมชาย', last_name: 'ซุปเปอร์ไวเซอร์'}, {id: 'S2', first_name: 'สมหญิง', last_name: 'หัวหน้างาน'}]);
+        setAvailableEmployees([{id: 'E101', first_name: 'ลูกน้อง', last_name: 'หนึ่ง'}, {id: 'E102', first_name: 'ลูกน้อง', last_name: 'สอง'}]);
+
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+        // Handle error (e.g., show a message to the user)
+      }
+    };
+    fetchDropdownData();
+  }, []);
+
+
+  const handleAddEmployeeRow = () => {
+    setEmployeeAttendances([
+      ...employeeAttendances,
+      { employeeId: '', employeeName: '', checkIn: '', checkOut: '', otHours: '', remarks: '' },
+    ]);
+  };
+
+  const handleEmployeeChange = (index, field, value) => {
+    const updatedAttendances = [...employeeAttendances];
+    if (field === "employeeId") {
+        const selectedEmp = availableEmployees.find(emp => emp.id === value);
+        updatedAttendances[index][field] = value;
+        updatedAttendances[index]["employeeName"] = selectedEmp ? `${selectedEmp.first_name} ${selectedEmp.last_name}` : '';
+    } else {
+        updatedAttendances[index][field] = value;
+    }
+    setEmployeeAttendances(updatedAttendances);
+  };
+
+  const handleRemoveEmployeeRow = (index) => {
+    const updatedAttendances = employeeAttendances.filter((_, i) => i !== index);
+    setEmployeeAttendances(updatedAttendances);
+  };
+
+  const handleFileChange = (event) => {
+    setImageAttachment(event.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('siteName', siteName);
+    formData.append('attendanceDate', attendanceDate);
+    formData.append('siteSupervisorId', siteSupervisor); // Assuming siteSupervisor state now holds ID
+    formData.append('supervisorCheckIn', supervisorCheckIn);
+    formData.append('supervisorCheckOut', supervisorCheckOut);
+    formData.append('supervisorOT', supervisorOT);
+    formData.append('supervisorRemarks', supervisorRemarks);
+    formData.append('employeeAttendances', JSON.stringify(employeeAttendances)); // Send as JSON string
+
+    if (imageAttachment) {
+      formData.append('imageAttachment', imageAttachment);
+    }
+
+    console.log('Submitting Attendance Data (FormData):');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+    
+    try {
+      // TODO: Send data to backend API endpoint (e.g., POST /api/attendance)
+      // const response = await axios.post('/api/attendance', formData, {
+      //   headers: {
+      //     'Content-Type': 'multipart/form-data',
+      //   },
+      // });
+      // console.log('Attendance submitted successfully:', response.data);
+      alert('ข้อมูลการลงเวลาถูกส่ง (จำลอง)');
+      // handleClearForm(); // Optionally clear form on success
+    } catch (error) {
+      console.error('Error submitting attendance:', error);
+      alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${error.response?.data?.msg || error.message}`);
+    }
+  };
+
+  const handleClearForm = () => {
+    setSiteName('');
+    setAttendanceDate(new Date().toISOString().slice(0,10));
+    setSiteSupervisor('');
+    setSupervisorCheckIn('');
+    setSupervisorCheckOut('');
+    setSupervisorOT('');
+    setSupervisorRemarks('');
+    setEmployeeAttendances([{ employeeId: '', employeeName: '', checkIn: '', checkOut: '', otHours: '', remarks: '' }]);
+    setImageAttachment(null);
+    const fileInput = document.getElementById('imageAttachment');
+    if (fileInput) fileInput.value = '';
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 py-8 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-sky-700">ลงชื่อเข้า-ออกงาน</h1>
+          <Link
+            to="/admin/login"
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out"
+          >
+            สำหรับผู้ดูแลระบบ
+          </Link>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Site and Date Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="siteName" className="block text-sm font-medium text-gray-700 mb-1">ชื่อไซต์งาน</label>
+              <input
+                type="text"
+                id="siteName"
+                value={siteName}
+                onChange={(e) => setSiteName(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="attendanceDate" className="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
+              <input
+                type="date"
+                id="attendanceDate"
+                value={attendanceDate}
+                onChange={(e) => setAttendanceDate(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Supervisor Section */}
+          <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">ข้อมูลหัวหน้าไซต์งาน</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label htmlFor="siteSupervisor" className="block text-sm font-medium text-gray-700 mb-1">หัวหน้าไซต์งาน</label>
+                <select
+                  id="siteSupervisor"
+                  value={siteSupervisor} // This should store the supervisor's ID
+                  onChange={(e) => setSiteSupervisor(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                >
+                  <option value="">เลือกหัวหน้าไซต์</option>
+                  {availableSupervisors.map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label htmlFor="supervisorCheckIn" className="block text-sm font-medium text-gray-700 mb-1">เวลาเข้า (หัวหน้า)</label>
+                <input type="time" id="supervisorCheckIn" value={supervisorCheckIn} onChange={(e) => setSupervisorCheckIn(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm" />
+              </div>
+              <div>
+                <label htmlFor="supervisorCheckOut" className="block text-sm font-medium text-gray-700 mb-1">เวลาออก (หัวหน้า)</label>
+                <input type="time" id="supervisorCheckOut" value={supervisorCheckOut} onChange={(e) => setSupervisorCheckOut(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm" />
+              </div>
+              <div>
+                <label htmlFor="supervisorOT" className="block text-sm font-medium text-gray-700 mb-1">ชม. OT (หัวหน้า)</label>
+                <input type="number" step="0.1" id="supervisorOT" value={supervisorOT} onChange={(e) => setSupervisorOT(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm" placeholder="เช่น 1.5"/>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label htmlFor="supervisorRemarks" className="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ (หัวหน้า)</label>
+              <textarea id="supervisorRemarks" value={supervisorRemarks} onChange={(e) => setSupervisorRemarks(e.target.value)} rows="2" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"></textarea>
+            </div>
+          </div>
+
+
+          {/* Employee Attendance Section */}
+          <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">รายชื่อพนักงาน / ช่าง</h2>
+            {employeeAttendances.map((att, index) => (
+              <div key={index} className="mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50 relative">
+                <h3 className="text-md font-medium text-gray-700 mb-2">พนักงานคนที่ {index + 1}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <label htmlFor={`empId-${index}`} className="block text-sm font-medium text-gray-700 mb-1">รายชื่อพนักงาน/ช่าง</label>
+                    <select
+                      id={`empId-${index}`}
+                      value={att.employeeId} // Store employee ID
+                      onChange={(e) => handleEmployeeChange(index, 'employeeId', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                    >
+                      <option value="">เลือกพนักงาน</option>
+                      {availableEmployees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor={`empOT-${index}`} className="block text-sm font-medium text-gray-700 mb-1">ชม. OT</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      id={`empOT-${index}`}
+                      placeholder="เช่น 2"
+                      value={att.otHours}
+                      onChange={(e) => handleEmployeeChange(index, 'otHours', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`empCheckIn-${index}`} className="block text-sm font-medium text-gray-700 mb-1">เวลาเข้า</label>
+                    <input
+                      type="time"
+                      id={`empCheckIn-${index}`}
+                      value={att.checkIn}
+                      onChange={(e) => handleEmployeeChange(index, 'checkIn', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor={`empCheckOut-${index}`} className="block text-sm font-medium text-gray-700 mb-1">เวลาออก</label>
+                    <input
+                      type="time"
+                      id={`empCheckOut-${index}`}
+                      value={att.checkOut}
+                      onChange={(e) => handleEmployeeChange(index, 'checkOut', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label htmlFor={`empRemarks-${index}`} className="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+                  <textarea
+                    id={`empRemarks-${index}`}
+                    rows="2"
+                    value={att.remarks}
+                    onChange={(e) => handleEmployeeChange(index, 'remarks', e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+                  ></textarea>
+                </div>
+                {employeeAttendances.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveEmployeeRow(index)}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-semibold"
+                    title="ลบรายการนี้"
+                  >
+                    &#x2715; {/* Cross mark */}
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddEmployeeRow}
+              className="mt-2 text-sm text-sky-600 hover:text-sky-800 font-medium flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              เพิ่มรายการพนักงาน
+            </button>
+          </div>
+
+          {/* Image Attachment */}
+          <div className="border-t border-gray-200 pt-6">
+            <label htmlFor="imageAttachment" className="block text-sm font-medium text-gray-700 mb-1">แนบรูป (ถ้ามี)</label>
+            <input
+              type="file"
+              id="imageAttachment"
+              onChange={handleFileChange}
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
+            >
+              ล้างข้อมูล
+            </button>
+            <button
+              type="submit"
+              className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
+            >
+              ยืนยันและส่งข้อมูล
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default AttendancePage;
