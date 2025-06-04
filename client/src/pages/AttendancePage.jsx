@@ -132,7 +132,7 @@ function AttendancePage() {
           <h1 className="text-3xl font-bold text-sky-700 text-center sm:text-left">ลงชื่อเข้า-ออกงาน</h1>
           <Link
             to="/admin/login"
-            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-full sm:w-auto text-center"
+            className="bg-green-600 hover:bg-green-700 text-white! font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-full sm:w-auto text-center"
           >
             สำหรับผู้ดูแลระบบ
           </Link>
@@ -265,7 +265,7 @@ function AttendancePage() {
             <button
               type="button"
               onClick={handleAddEmployeeRow}
-              className="mt-2 text-sm text-green-400 hover:text-green-800 font-medium flex items-center py-2 px-3 rounded-md hover:bg-sky-50 transition-colors"
+              className="mt-2 text-sm bg-green-600! hover:bg-green-700! text-white! font-semibold flex items-center py-2 px-3 rounded-md transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -290,13 +290,13 @@ function AttendancePage() {
             <button
               type="button"
               onClick={handleClearForm}
-              className="w-full sm:w-auto bg-gray-200 text-red-400 font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
+              className="w-full sm:w-auto bg-gray-200! text-red-400! font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
             >
               ล้างข้อมูล
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
+              className="w-full sm:w-auto bg-sky-600! hover:bg-sky-700! text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
             >
               ยืนยันและส่งข้อมูล
             </button>
