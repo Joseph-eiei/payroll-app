@@ -4,13 +4,11 @@ const router = express.Router();
 const employeeController = require('../controllers/employeeController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Apply authMiddleware to all routes in this file
-router.use(authMiddleware);
-
 // Define routes
-router.get('/', employeeController.getAllEmployees);
-router.post('/', employeeController.createEmployee);
-router.put('/:id', employeeController.updateEmployee);
-router.delete('/:id', employeeController.deleteEmployee);
+router.get('/', authMiddleware, employeeController.getAllEmployees);
+router.get('/role/:role', employeeController.getEmployeesByRole);
+router.post('/', authMiddleware, employeeController.createEmployee);
+router.put('/:id', authMiddleware, employeeController.updateEmployee);
+router.delete('/:id', authMiddleware, employeeController.deleteEmployee);
 
 module.exports = router;

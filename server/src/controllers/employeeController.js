@@ -1,7 +1,7 @@
 const pool = require('../config/db'); // Your PostgreSQL connection pool
 
 const ALLOWED_ACCOMMODATION = ["โกดัง", "แคมป์ก่อสร้าง", "โรงงาน"];
-const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนักงาน", "ช่าง"]; // Added "ช่าง"
+const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนักงาน", "ช่าง"];
 
 // @desc    Get all employees
 // @route   GET /api/employees
@@ -19,6 +19,27 @@ exports.getAllEmployees = async (req, res) => {
         res.status(500).send('Server error while fetching employees');
     }
 };
+
+exports.getEmployeesByRole = async (req, res) => {
+    const { role } = req.params;
+
+    if (!ALLOWED_EMPLOYEE_ROLES.includes(role)) {
+        return res.status(400).json({ msg: `Invalid employee role. Allowed values are: ${ALLOWED_EMPLOYEE_ROLES.join(', ')}.` });
+    }
+
+    try {
+        const query = `
+            SELECT *
+            FROM Employees
+            WHERE employee_role = $1 ORDER BY created_at DESC
+        `;
+        const employees = await pool.query(query, [role]);
+        res.json(employees.rows);
+    } catch (err) {
+        console.error('Error in getEmployeesByRole:', err.message);
+        res.status(500).send('Server error while fetching employees by role');
+    }
+}
 
 // @desc    Create a new employee
 // @route   POST /api/employees

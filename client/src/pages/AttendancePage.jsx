@@ -22,18 +22,16 @@ function AttendancePage() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        // TODO: Replace with actual API calls to fetch supervisors and employees
-        // Example:
-        // const token = localStorage.getItem('adminToken'); // Or get from auth context
-        // const headers = { Authorization: `Bearer ${token}` };
-        // const supervisorsRes = await axios.get('/api/employees?role=supervisor', { headers });
-        // const employeesRes = await axios.get('/api/employees?role=employee', { headers });
-        // setAvailableSupervisors(supervisorsRes.data);
-        // setAvailableEmployees(employeesRes.data);
+                const supervisorsRes = await axios.get(`/api/employees/role/หัวหน้างาน`, { headers });
+        const employeesRes = await axios.get(`/api/employees/role/พนักงาน`, { headers });
+        const techniciansRes = await axios.get(`/api/employees/role/ช่าง`, { headers });
+        
+        setAvailableEmployees([...employeesRes.data, ...techniciansRes.data]);
+        setAvailableSupervisors(supervisorsRes.data);
 
         // Using placeholder data for now
-        setAvailableSupervisors([{id: 'S1', first_name: 'สมชาย', last_name: 'ซุปเปอร์ไวเซอร์'}, {id: 'S2', first_name: 'สมหญิง', last_name: 'หัวหน้างาน'}]);
-        setAvailableEmployees([{id: 'E101', first_name: 'ลูกน้อง', last_name: 'หนึ่ง'}, {id: 'E102', first_name: 'ลูกน้อง', last_name: 'สอง'}]);
+        // setAvailableSupervisors([{id: 'S1', first_name: 'สมชาย', last_name: 'ซุปเปอร์ไวเซอร์'}, {id: 'S2', first_name: 'สมหญิง', last_name: 'หัวหน้างาน'}]);
+        // setAvailableEmployees([{id: 'E101', first_name: 'ลูกน้อง', last_name: 'หนึ่ง'}, {id: 'E102', first_name: 'ลูกน้อง', last_name: 'สอง'}]);
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
         // Consider setting an error state to inform the user
