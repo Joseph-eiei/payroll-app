@@ -173,9 +173,9 @@ function AttendanceReviewPage() {
                 )}
               </div>
               <div className="space-x-2">
-                <button className="text-green-700" onClick={() => handleVerify(form.id)}>ยืนยัน</button>
-                <button className="text-blue-700" onClick={() => openEdit(form)}>แก้ไข</button>
-                <button className="text-red-700" onClick={() => handleDelete(form.id)}>ลบ</button>
+                <button className="text-green-500" onClick={() => handleVerify(form.id)}>ยืนยัน</button>
+                <button className="text-blue-500" onClick={() => openEdit(form)}>แก้ไข</button>
+                <button className="text-red-500" onClick={() => handleDelete(form.id)}>ลบ</button>
               </div>
             </div>
             {editingForm === form.id && editData && (
@@ -189,6 +189,8 @@ function AttendanceReviewPage() {
                     <label className="block text-xs font-medium text-gray-700 mb-1">วันที่</label>
                     <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2 w-full" required />
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">หัวหน้าไซต์งาน</label>
                     <select value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2 w-full">
@@ -216,7 +218,10 @@ function AttendanceReviewPage() {
                   </div>
                 </div>
                 {editData.employees.map((emp, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-7 gap-2">
+                    <div>
+                      <h3 className="text-md font-medium text-gray-700">พนักงานคนที่ {idx + 1}</h3>
+                    </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">รายชื่อพนักงาน/ช่าง</label>
                       <select value={emp.employeeId} onChange={(e)=>handleEmpChange(idx,'employeeId',e.target.value)} className="border p-2 w-full">
@@ -245,10 +250,10 @@ function AttendanceReviewPage() {
                     <button type="button" onClick={()=>removeEmpRow(idx)} className="text-red-600">ลบ</button>
                   </div>
                 ))}
-                <button type="button" onClick={addEmpRow} className="text-sm text-blue-700">+ เพิ่มพนักงาน</button>
+                <button type="button" onClick={addEmpRow} className="text-sm text-green-500">+ เพิ่มพนักงาน</button>
                 <div className="space-x-2">
                   <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">บันทึก</button>
-                  <button type="button" onClick={()=>{setEditingForm(null);setEditData(null);}} className="bg-gray-300 px-4 py-2 rounded">ยกเลิก</button>
+                  <button type="button" onClick={()=>{setEditingForm(null);setEditData(null);}} className="bg-gray-300 px-4 py-2 text-white rounded">ยกเลิก</button>
                 </div>
               </form>
             )}
