@@ -106,7 +106,7 @@ function AttendanceReviewPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto text-black">
       <h2 className="text-2xl font-semibold mb-4">ตรวจสอบการลงชื่อทำงาน</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <div className="space-y-4">
