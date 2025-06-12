@@ -9,6 +9,7 @@ import AttendancePage from './pages/AttendancePage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import EmployeeListPage from './pages/EmployeeListPage';
 import AttendanceReviewPage from './pages/AttendanceReviewPage';
+import WorkHistoryPage from './pages/WorkHistoryPage';
 
 // --- Main App Component ---
 function AppContent() {
@@ -86,6 +87,7 @@ function AppContent() {
         <Route element={<ProtectedRoute />}>
           <Route path="/admin/employees" element={<EmployeeListPage />} />
           <Route path="/admin/attendance-review" element={<AttendanceReviewPage />} />
+          <Route path="/admin/history" element={<WorkHistoryPage />} />
           <Route path="/admin" element={<Navigate to="/admin/employees" replace />} />
         </Route>
 
