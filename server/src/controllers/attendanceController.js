@@ -13,6 +13,10 @@ exports.submitAttendanceForm = async (req, res) => {
     employeeAttendances
   } = req.body;
 
+  const imageFile = req.file ? req.file.filename : null;
+
+  const imageFile = req.file ? req.file.filename : null;
+
   const employees = []; 
   if (employeeAttendances) {
     try { employees.push(...JSON.parse(employeeAttendances)); } catch (e) {}
@@ -36,7 +40,7 @@ exports.submitAttendanceForm = async (req, res) => {
         supervisorCheckOut || null,
         supervisorOT || null,
         supervisorRemarks || null,
-        null
+        imageFile
       ]
     );
     const attendanceId = formRes.rows[0].id;
@@ -122,8 +126,9 @@ exports.updateForm = async (req, res) => {
          supervisor_check_out=$5,
          supervisor_ot=$6,
          supervisor_remarks=$7,
+         image_attachment=COALESCE($8, image_attachment),
          updated_at=CURRENT_TIMESTAMP
-       WHERE id=$8`,
+       WHERE id=$9`,
       [
         siteName,
         attendanceDate,
@@ -132,6 +137,7 @@ exports.updateForm = async (req, res) => {
         supervisorCheckOut || null,
         supervisorOT || null,
         supervisorRemarks || null,
+        imageFile,
         id
       ]
     );

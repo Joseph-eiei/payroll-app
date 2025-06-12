@@ -71,27 +71,28 @@ function AttendancePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Build payload as JSON since the backend currently expects JSON data
+    // Build form data so the backend can handle file uploads
     const validEmployeeAttendances = employeeAttendances.filter(
       (att) => att.employeeId || att.checkIn || att.checkOut || att.otHours || att.remarks
     );
 
-    const payload = {
-      siteName,
-      attendanceDate,
-      siteSupervisorId: siteSupervisor,
-      supervisorCheckIn,
-      supervisorCheckOut,
-      supervisorOT,
-      supervisorRemarks,
-      employeeAttendances: JSON.stringify(validEmployeeAttendances),
-      // imageAttachment is ignored for now as backend does not handle uploads
-    };
+    const formData = new FormData();
+    formData.append('siteName', siteName);
+    formData.append('attendanceDate', attendanceDate);
+    formData.append('siteSupervisorId', siteSupervisor);
+    formData.append('supervisorCheckIn', supervisorCheckIn);
+    formData.append('supervisorCheckOut', supervisorCheckOut);
+    formData.append('supervisorOT', supervisorOT);
+    formData.append('supervisorRemarks', supervisorRemarks);
+    formData.append('employeeAttendances', JSON.stringify(validEmployeeAttendances));
+    if (imageAttachment) {
+      formData.append('imageAttachment', imageAttachment);
+    }
 
     try {
-      const response = await axios.post('/api/attendance', payload, {
+      const response = await axios.post('/api/attendance', formData, {
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'multipart/form-data',
         },
       });
       console.log('Attendance submitted successfully:', response.data);
