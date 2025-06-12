@@ -7,6 +7,8 @@ function AttendanceReviewPage() {
   const [editingForm, setEditingForm] = useState(null);
   const [editData, setEditData] = useState(null);
   const [employeesMap, setEmployeesMap] = useState({});
+  const [availableSupervisors, setAvailableSupervisors] = useState([]);
+  const [availableEmployees, setAvailableEmployees] = useState([]);
 
   const fetchForms = async () => {
     try {
@@ -19,12 +21,19 @@ function AttendanceReviewPage() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get('/api/employees');
+      const [allRes, supRes, empRes, techRes] = await Promise.all([
+        axios.get('/api/employees'),
+        axios.get('/api/employees/role/หัวหน้างาน'),
+        axios.get('/api/employees/role/พนักงาน'),
+        axios.get('/api/employees/role/ช่าง'),
+      ]);
       const map = {};
-      res.data.forEach(e => {
+      allRes.data.forEach(e => {
         map[e.id] = `${e.first_name} ${e.last_name}`;
       });
       setEmployeesMap(map);
+      setAvailableSupervisors(supRes.data);
+      setAvailableEmployees([...empRes.data, ...techRes.data]);
     } catch (err) {
       console.error('failed to fetch employees', err);
     }
@@ -181,11 +190,13 @@ function AttendanceReviewPage() {
                     <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2 w-full" required />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">รหัสหัวหน้าไซต์</label>
-                    <input type="text" value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2 w-full" />
-                    {editData.siteSupervisorId && employeesMap[editData.siteSupervisorId] && (
-                      <p className="text-xs text-gray-500 mt-1">{employeesMap[editData.siteSupervisorId]}</p>
-                    )}
+                    <label className="block text-xs font-medium text-gray-700 mb-1">หัวหน้าไซต์งาน</label>
+                    <select value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2 w-full">
+                      <option value="">เลือกหัวหน้าไซต์</option>
+                      {availableSupervisors.map(s => (
+                        <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">เวลาเข้า (หัวหน้า)</label>
@@ -207,11 +218,13 @@ function AttendanceReviewPage() {
                 {editData.employees.map((emp, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">ID พนักงาน</label>
-                      <input type="text" value={emp.employeeId} onChange={(e)=>handleEmpChange(idx,'employeeId',e.target.value)} className="border p-2 w-full" />
-                      {emp.employeeId && employeesMap[emp.employeeId] && (
-                        <p className="text-xs text-gray-500 mt-1">{employeesMap[emp.employeeId]}</p>
-                      )}
+                      <label className="block text-xs font-medium text-gray-700 mb-1">รายชื่อพนักงาน/ช่าง</label>
+                      <select value={emp.employeeId} onChange={(e)=>handleEmpChange(idx,'employeeId',e.target.value)} className="border p-2 w-full">
+                        <option value="">เลือกพนักงาน</option>
+                        {availableEmployees.map(e => (
+                          <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">เข้า</label>
