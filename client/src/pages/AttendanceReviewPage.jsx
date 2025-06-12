@@ -111,15 +111,18 @@ function AttendanceReviewPage() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/api/attendance/${editingForm}`, {
-        siteName: editData.siteName,
-        attendanceDate: editData.attendanceDate,
-        siteSupervisorId: editData.siteSupervisorId,
-        supervisorCheckIn: editData.supervisorCheckIn,
-        supervisorCheckOut: editData.supervisorCheckOut,
-        supervisorOT: editData.supervisorOT,
-        supervisorRemarks: editData.supervisorRemarks,
-        employeeAttendances: JSON.stringify(editData.employees)
+      const formData = new FormData();
+      formData.append('siteName', editData.siteName);
+      formData.append('attendanceDate', editData.attendanceDate);
+      formData.append('siteSupervisorId', editData.siteSupervisorId);
+      formData.append('supervisorCheckIn', editData.supervisorCheckIn);
+      formData.append('supervisorCheckOut', editData.supervisorCheckOut);
+      formData.append('supervisorOT', editData.supervisorOT);
+      formData.append('supervisorRemarks', editData.supervisorRemarks);
+      formData.append('employeeAttendances', JSON.stringify(editData.employees));
+
+      await axios.put(`/api/attendance/${editingForm}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setEditingForm(null);
       setEditData(null);
@@ -148,6 +151,15 @@ function AttendanceReviewPage() {
                 </p>
                 <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
                 <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                {form.image_attachment && (
+                  <div className="mt-2">
+                    <img
+                      src={`/uploads/${form.image_attachment}`}
+                      alt="แนบรูปไซต์"
+                      className="max-h-48 rounded"
+                    />
+                  </div>
+                )}
                 {form.employees.length > 0 && (
                   <table className="mt-2 w-full text-sm text-left">
                     <thead>
