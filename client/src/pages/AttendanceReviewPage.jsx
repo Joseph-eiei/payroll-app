@@ -45,7 +45,7 @@ function AttendanceReviewPage() {
   }, []);
 
   const handleVerify = async (id) => {
-    if (!window.confirm('ยืนยันข้อมูลนี้?')) return;
+    if (!window.confirm('คุณต้องการยืนยันการลงชื่อไซต์ ใช่ไหม?')) return;
     try {
       await axios.put(`/api/attendance/${id}/verify`);
       fetchForms();
@@ -55,7 +55,7 @@ function AttendanceReviewPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('ลบฟอร์มนี้?')) return;
+    if (!window.confirm('การลบฟอร์มนี้จะไม่สามารถแก้ไขทีหลังได้')) return;
     try {
       await axios.delete(`/api/attendance/${id}`);
       fetchForms();
@@ -145,7 +145,6 @@ function AttendanceReviewPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <p className="font-medium">{form.site_name} - วันที่: {form.attendance_date.slice(8,10)}-{form.attendance_date.slice(5,7)}-{form.attendance_date.slice(0,4)}</p> {/*วัน-เดือน-ปี*/}
-                {console.log(form.attendance_date)}
                 <p className="text-sm text-gray-600">
                   หัวหน้าไซต์:
                   {form.site_supervisor_id ? `${employeesMap[form.site_supervisor_id] ? employeesMap[form.site_supervisor_id] + ' (' + form.site_supervisor_id + ')' : form.site_supervisor_id}` : '-'}
@@ -196,6 +195,7 @@ function AttendanceReviewPage() {
             </div>
             {editingForm === form.id && editData && (
               <form onSubmit={handleEditSubmit} className="mt-4 space-y-4 bg-gray-50 p-4 rounded">
+                <p className='text-2xl font-bold'>แก้ไข</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อไซต์งาน</label>

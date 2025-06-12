@@ -15,8 +15,6 @@ exports.submitAttendanceForm = async (req, res) => {
 
   const imageFile = req.file ? req.file.filename : null;
 
-  const imageFile = req.file ? req.file.filename : null;
-
   const employees = []; 
   if (employeeAttendances) {
     try { employees.push(...JSON.parse(employeeAttendances)); } catch (e) {}
