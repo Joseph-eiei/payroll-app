@@ -112,9 +112,36 @@ function AttendanceReviewPage() {
       <div className="space-y-4">
         {forms.map(form => (
           <div key={form.id} className="border p-4 rounded bg-white shadow">
-            <div className="flex justify-between items-center">
-              <div>
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
                 <p className="font-medium">{form.site_name} - {form.attendance_date.slice(0,10)}</p>
+                <p className="text-sm text-gray-600">หัวหน้าไซต์: {form.site_supervisor_id || '-'}</p>
+                <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
+                <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                {form.employees.length > 0 && (
+                  <table className="mt-2 w-full text-sm text-left">
+                    <thead>
+                      <tr>
+                        <th className="border px-2">รหัสพนักงาน</th>
+                        <th className="border px-2">เข้า</th>
+                        <th className="border px-2">ออก</th>
+                        <th className="border px-2">OT</th>
+                        <th className="border px-2">หมายเหตุ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.employees.map((emp, i) => (
+                        <tr key={i}>
+                          <td className="border px-2">{emp.employeeId}</td>
+                          <td className="border px-2">{emp.checkIn || '-'}</td>
+                          <td className="border px-2">{emp.checkOut || '-'}</td>
+                          <td className="border px-2">{emp.otHours || '-'}</td>
+                          <td className="border px-2">{emp.remarks || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
               <div className="space-x-2">
                 <button className="text-green-700" onClick={() => handleVerify(form.id)}>ยืนยัน</button>
@@ -127,6 +154,11 @@ function AttendanceReviewPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input type="text" value={editData.siteName} onChange={(e)=>handleEditChange('siteName', e.target.value)} className="border p-2" placeholder="ชื่อไซต์งาน" required />
                   <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2" required />
+                  <input type="text" value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2" placeholder="รหัสหัวหน้าไซต์" />
+                  <input type="time" value={editData.supervisorCheckIn} onChange={(e)=>handleEditChange('supervisorCheckIn', e.target.value)} className="border p-2" />
+                  <input type="time" value={editData.supervisorCheckOut} onChange={(e)=>handleEditChange('supervisorCheckOut', e.target.value)} className="border p-2" />
+                  <input type="number" step="0.1" value={editData.supervisorOT} onChange={(e)=>handleEditChange('supervisorOT', e.target.value)} className="border p-2" placeholder="OT (ชม.)" />
+                  <input type="text" value={editData.supervisorRemarks} onChange={(e)=>handleEditChange('supervisorRemarks', e.target.value)} className="border p-2" placeholder="หมายเหตุหัวหน้า" />
                 </div>
                 {editData.employees.map((emp, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
