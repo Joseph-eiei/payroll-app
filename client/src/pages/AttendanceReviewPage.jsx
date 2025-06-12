@@ -141,7 +141,8 @@ function AttendanceReviewPage() {
           <div key={form.id} className="border p-4 rounded bg-white shadow">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <p className="font-medium">{form.site_name} - {form.attendance_date.slice(0,10)}</p>
+                <p className="font-medium">{form.site_name} - วันที่: {form.attendance_date.slice(8,10)}-{form.attendance_date.slice(5,7)}-{form.attendance_date.slice(0,4)}</p> {/*วัน-เดือน-ปี*/}
+                {console.log(form.attendance_date)}
                 <p className="text-sm text-gray-600">
                   หัวหน้าไซต์:
                   {form.site_supervisor_id ? `${employeesMap[form.site_supervisor_id] ? employeesMap[form.site_supervisor_id] + ' (' + form.site_supervisor_id + ')' : form.site_supervisor_id}` : '-'}
@@ -222,8 +223,8 @@ function AttendanceReviewPage() {
                 </div>
                 {editData.employees.map((emp, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-7 gap-2">
-                    <div>
-                      <h3 className="text-md font-medium text-gray-700">พนักงานคนที่ {idx + 1}</h3>
+                    <div className='flex items-center'>
+                      <h3 className="่text-md font-medium text-gray-700">พนักงานคนที่ {idx + 1}</h3>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">รายชื่อพนักงาน/ช่าง</label>
