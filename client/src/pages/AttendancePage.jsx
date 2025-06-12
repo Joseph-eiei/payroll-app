@@ -22,9 +22,9 @@ function AttendancePage() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-                const supervisorsRes = await axios.get(`/api/employees/role/หัวหน้างาน`, { headers });
-        const employeesRes = await axios.get(`/api/employees/role/พนักงาน`, { headers });
-        const techniciansRes = await axios.get(`/api/employees/role/ช่าง`, { headers });
+        const supervisorsRes = await axios.get(`/api/employees/role/หัวหน้างาน`);
+        const employeesRes = await axios.get(`/api/employees/role/พนักงาน`);
+        const techniciansRes = await axios.get(`/api/employees/role/ช่าง`);
         
         setAvailableEmployees([...employeesRes.data, ...techniciansRes.data]);
         setAvailableSupervisors(supervisorsRes.data);
@@ -134,7 +134,7 @@ function AttendancePage() {
             to="/admin/login"
             className="bg-green-600 hover:bg-green-700 text-white! font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-full sm:w-auto text-center"
           >
-            สำหรับผู้ดูแลระบบ
+            เข้าสู่ระบบ
           </Link>
         </div>
 
