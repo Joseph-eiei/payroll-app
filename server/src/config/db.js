@@ -1,5 +1,7 @@
 // server/src/config/db.js
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+types.setTypeParser(1082, val => val); // Date type
 
 const pool = new Pool({
   user: process.env.DB_USER,

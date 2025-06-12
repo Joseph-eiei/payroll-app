@@ -60,11 +60,13 @@ function WorkHistoryPage() {
                     <p className="font-medium">{form.site_name}</p>
                     <p className="text-sm text-gray-600">
                       หัวหน้าไซต์:{' '}
-                      {form.site_supervisor_id ? (employeesMap[form.site_supervisor_id] ? `${employeesMap[form.site_supervisor_id]} (${form.site_supervisor_id})` : form.site_supervisor_id) : '-'}
+                      {form.site_supervisor_id ? (employeesMap[form.site_supervisor_id] ? `${employeesMap[form.site_supervisor_id]}` : form.site_supervisor_id) : '-'}
                     </p>
-                    <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
-                    <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
-                    <p className="text-sm text-gray-600">เบี้ยขยัน: {form.is_bonus ? 'ใช่' : 'ไม่ใช่'}</p>
+                    <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} น.</p>
+                    <p className="text-sm text-gray-600">ออก: {form.supervisor_check_out || '-'} น.</p>
+                    <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'}</p>
+                    <p className="text-sm text-gray-600">หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                    <p className="text-sm text-black-600 font-bold">เบี้ยขยัน: {form.is_bonus ? 'ใช่' : 'ไม่ใช่'}</p>
                     {form.image_attachment && (
                       <div className="mt-2">
                         <img src={`/uploads/${form.image_attachment}`} alt="แนบรูปไซต์" className="max-h-48 rounded" />
