@@ -10,6 +10,10 @@ function AttendanceReviewPage() {
   const [availableSupervisors, setAvailableSupervisors] = useState([]);
   const [availableEmployees, setAvailableEmployees] = useState([]);
 
+  const handleBonusChange = (id, value) => {
+    setForms(prev => prev.map(f => (f.id === id ? { ...f, is_bonus: value } : f)));
+  };
+
   const fetchForms = async () => {
     try {
       const res = await axios.get('/api/attendance/pending');
@@ -44,10 +48,10 @@ function AttendanceReviewPage() {
     fetchEmployees();
   }, []);
 
-  const handleVerify = async (id) => {
+  const handleVerify = async (id, isBonus) => {
     if (!window.confirm('คุณต้องการยืนยันการลงชื่อไซต์ ใช่ไหม?')) return;
     try {
-      await axios.put(`/api/attendance/${id}/verify`);
+      await axios.put(`/api/attendance/${id}/verify`, { isBonus });
       fetchForms();
     } catch (err) {
       alert('เกิดข้อผิดพลาดในการยืนยัน');
@@ -160,6 +164,14 @@ function AttendanceReviewPage() {
                     />
                   </div>
                 )}
+                <label className="flex items-center space-x-1 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.is_bonus || false}
+                    onChange={e => handleBonusChange(form.id, e.target.checked)}
+                  />
+                  <span>เบี้ยขยัน</span>
+                </label>
                 {form.employees.length > 0 && (
                   <table className="mt-2 w-full text-sm text-left">
                     <thead>
@@ -188,7 +200,7 @@ function AttendanceReviewPage() {
                 )}
               </div>
               <div className="space-x-2">
-                <button className="text-green-500" onClick={() => handleVerify(form.id)}>ยืนยัน</button>
+                <button className="text-green-500" onClick={() => handleVerify(form.id, form.is_bonus)}>ยืนยัน</button>
                 <button className="text-blue-500" onClick={() => openEdit(form)}>แก้ไข</button>
                 <button className="text-red-500" onClick={() => handleDelete(form.id)}>ลบ</button>
               </div>

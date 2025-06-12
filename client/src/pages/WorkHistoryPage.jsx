@@ -64,6 +64,7 @@ function WorkHistoryPage() {
                     </p>
                     <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
                     <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                    <p className="text-sm text-gray-600">เบี้ยขยัน: {form.is_bonus ? 'ใช่' : 'ไม่ใช่'}</p>
                     {form.image_attachment && (
                       <div className="mt-2">
                         <img src={`/uploads/${form.image_attachment}`} alt="แนบรูปไซต์" className="max-h-48 rounded" />

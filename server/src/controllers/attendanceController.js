@@ -29,8 +29,8 @@ exports.submitAttendanceForm = async (req, res) => {
         site_name, attendance_date, site_supervisor_id,
         supervisor_check_in, supervisor_check_out,
         supervisor_ot, supervisor_remarks, image_attachment,
-        is_verified, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+        is_bonus, is_verified, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
       RETURNING id`,
       [
         siteName,
@@ -202,10 +202,11 @@ exports.deleteForm = async (req, res) => {
 // Verify a form
 exports.verifyForm = async (req, res) => {
   const { id } = req.params;
+  const { isBonus } = req.body;
   try {
     const upd = await pool.query(
-      'UPDATE AttendanceForms SET is_verified=true, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id',
-      [id]
+      'UPDATE AttendanceForms SET is_verified=true, is_bonus=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id',
+      [id, isBonus === true || isBonus === "true"]
     );
     if (upd.rowCount === 0) return res.status(404).json({ msg: 'Form not found' });
     res.json({ msg: 'verified' });
