@@ -6,6 +6,7 @@ function AttendanceReviewPage() {
   const [error, setError] = useState('');
   const [editingForm, setEditingForm] = useState(null);
   const [editData, setEditData] = useState(null);
+  const [employeesMap, setEmployeesMap] = useState({});
 
   const fetchForms = async () => {
     try {
@@ -16,8 +17,22 @@ function AttendanceReviewPage() {
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get('/api/employees');
+      const map = {};
+      res.data.forEach(e => {
+        map[e.id] = `${e.first_name} ${e.last_name}`;
+      });
+      setEmployeesMap(map);
+    } catch (err) {
+      console.error('failed to fetch employees', err);
+    }
+  };
+
   useEffect(() => {
     fetchForms();
+    fetchEmployees();
   }, []);
 
   const handleVerify = async (id) => {
@@ -115,7 +130,10 @@ function AttendanceReviewPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <p className="font-medium">{form.site_name} - {form.attendance_date.slice(0,10)}</p>
-                <p className="text-sm text-gray-600">หัวหน้าไซต์: {form.site_supervisor_id || '-'}</p>
+                <p className="text-sm text-gray-600">
+                  หัวหน้าไซต์:
+                  {form.site_supervisor_id ? `${employeesMap[form.site_supervisor_id] ? employeesMap[form.site_supervisor_id] + ' (' + form.site_supervisor_id + ')' : form.site_supervisor_id}` : '-'}
+                </p>
                 <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
                 <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
                 {form.employees.length > 0 && (
@@ -123,6 +141,7 @@ function AttendanceReviewPage() {
                     <thead>
                       <tr>
                         <th className="border px-2">รหัสพนักงาน</th>
+                        <th className="border px-2">ชื่อพนักงาน</th>
                         <th className="border px-2">เข้า</th>
                         <th className="border px-2">ออก</th>
                         <th className="border px-2">OT</th>
@@ -133,6 +152,7 @@ function AttendanceReviewPage() {
                       {form.employees.map((emp, i) => (
                         <tr key={i}>
                           <td className="border px-2">{emp.employeeId}</td>
+                          <td className="border px-2">{employeesMap[emp.employeeId] || '-'}</td>
                           <td className="border px-2">{emp.checkIn || '-'}</td>
                           <td className="border px-2">{emp.checkOut || '-'}</td>
                           <td className="border px-2">{emp.otHours || '-'}</td>
@@ -152,21 +172,63 @@ function AttendanceReviewPage() {
             {editingForm === form.id && editData && (
               <form onSubmit={handleEditSubmit} className="mt-4 space-y-4 bg-gray-50 p-4 rounded">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="text" value={editData.siteName} onChange={(e)=>handleEditChange('siteName', e.target.value)} className="border p-2" placeholder="ชื่อไซต์งาน" required />
-                  <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2" required />
-                  <input type="text" value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2" placeholder="รหัสหัวหน้าไซต์" />
-                  <input type="time" value={editData.supervisorCheckIn} onChange={(e)=>handleEditChange('supervisorCheckIn', e.target.value)} className="border p-2" />
-                  <input type="time" value={editData.supervisorCheckOut} onChange={(e)=>handleEditChange('supervisorCheckOut', e.target.value)} className="border p-2" />
-                  <input type="number" step="0.1" value={editData.supervisorOT} onChange={(e)=>handleEditChange('supervisorOT', e.target.value)} className="border p-2" placeholder="OT (ชม.)" />
-                  <input type="text" value={editData.supervisorRemarks} onChange={(e)=>handleEditChange('supervisorRemarks', e.target.value)} className="border p-2" placeholder="หมายเหตุหัวหน้า" />
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">ชื่อไซต์งาน</label>
+                    <input type="text" value={editData.siteName} onChange={(e)=>handleEditChange('siteName', e.target.value)} className="border p-2 w-full" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">วันที่</label>
+                    <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2 w-full" required />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">รหัสหัวหน้าไซต์</label>
+                    <input type="text" value={editData.siteSupervisorId} onChange={(e)=>handleEditChange('siteSupervisorId', e.target.value)} className="border p-2 w-full" />
+                    {editData.siteSupervisorId && employeesMap[editData.siteSupervisorId] && (
+                      <p className="text-xs text-gray-500 mt-1">{employeesMap[editData.siteSupervisorId]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">เวลาเข้า (หัวหน้า)</label>
+                    <input type="time" value={editData.supervisorCheckIn} onChange={(e)=>handleEditChange('supervisorCheckIn', e.target.value)} className="border p-2 w-full" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">เวลาออก (หัวหน้า)</label>
+                    <input type="time" value={editData.supervisorCheckOut} onChange={(e)=>handleEditChange('supervisorCheckOut', e.target.value)} className="border p-2 w-full" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">OT (ชม.)</label>
+                    <input type="number" step="0.1" value={editData.supervisorOT} onChange={(e)=>handleEditChange('supervisorOT', e.target.value)} className="border p-2 w-full" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">หมายเหตุหัวหน้า</label>
+                    <input type="text" value={editData.supervisorRemarks} onChange={(e)=>handleEditChange('supervisorRemarks', e.target.value)} className="border p-2 w-full" />
+                  </div>
                 </div>
                 {editData.employees.map((emp, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                    <input type="text" value={emp.employeeId} onChange={(e)=>handleEmpChange(idx,'employeeId',e.target.value)} className="border p-2" placeholder="ID พนักงาน" />
-                    <input type="time" value={emp.checkIn} onChange={(e)=>handleEmpChange(idx,'checkIn',e.target.value)} className="border p-2" />
-                    <input type="time" value={emp.checkOut} onChange={(e)=>handleEmpChange(idx,'checkOut',e.target.value)} className="border p-2" />
-                    <input type="number" step="0.1" value={emp.otHours} onChange={(e)=>handleEmpChange(idx,'otHours',e.target.value)} className="border p-2" />
-                    <input type="text" value={emp.remarks} onChange={(e)=>handleEmpChange(idx,'remarks',e.target.value)} className="border p-2" placeholder="หมายเหตุ" />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">ID พนักงาน</label>
+                      <input type="text" value={emp.employeeId} onChange={(e)=>handleEmpChange(idx,'employeeId',e.target.value)} className="border p-2 w-full" />
+                      {emp.employeeId && employeesMap[emp.employeeId] && (
+                        <p className="text-xs text-gray-500 mt-1">{employeesMap[emp.employeeId]}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">เข้า</label>
+                      <input type="time" value={emp.checkIn} onChange={(e)=>handleEmpChange(idx,'checkIn',e.target.value)} className="border p-2 w-full" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">ออก</label>
+                      <input type="time" value={emp.checkOut} onChange={(e)=>handleEmpChange(idx,'checkOut',e.target.value)} className="border p-2 w-full" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">OT</label>
+                      <input type="number" step="0.1" value={emp.otHours} onChange={(e)=>handleEmpChange(idx,'otHours',e.target.value)} className="border p-2 w-full" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">หมายเหตุ</label>
+                      <input type="text" value={emp.remarks} onChange={(e)=>handleEmpChange(idx,'remarks',e.target.value)} className="border p-2 w-full" />
+                    </div>
                     <button type="button" onClick={()=>removeEmpRow(idx)} className="text-red-600">ลบ</button>
                   </div>
                 ))}
