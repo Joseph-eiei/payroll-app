@@ -70,41 +70,34 @@ function AttendancePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formDataToSubmit = new FormData();
-    formDataToSubmit.append('siteName', siteName);
-    formDataToSubmit.append('attendanceDate', attendanceDate);
-    formDataToSubmit.append('siteSupervisorId', siteSupervisor);
-    formDataToSubmit.append('supervisorCheckIn', supervisorCheckIn);
-    formDataToSubmit.append('supervisorCheckOut', supervisorCheckOut);
-    formDataToSubmit.append('supervisorOT', supervisorOT);
-    formDataToSubmit.append('supervisorRemarks', supervisorRemarks);
-    
-    // Filter out empty rows before submitting
+
+    // Build payload as JSON since the backend currently expects JSON data
     const validEmployeeAttendances = employeeAttendances.filter(
-      att => att.employeeId || att.checkIn || att.checkOut || att.otHours || att.remarks
+      (att) => att.employeeId || att.checkIn || att.checkOut || att.otHours || att.remarks
     );
-    formDataToSubmit.append('employeeAttendances', JSON.stringify(validEmployeeAttendances));
 
-    if (imageAttachment) {
-      formDataToSubmit.append('imageAttachment', imageAttachment);
-    }
+    const payload = {
+      siteName,
+      attendanceDate,
+      siteSupervisorId: siteSupervisor,
+      supervisorCheckIn,
+      supervisorCheckOut,
+      supervisorOT,
+      supervisorRemarks,
+      employeeAttendances: JSON.stringify(validEmployeeAttendances),
+      // imageAttachment is ignored for now as backend does not handle uploads
+    };
 
-    console.log('Submitting Attendance Data (FormData):');
-    for (let [key, value] of formDataToSubmit.entries()) {
-        console.log(key, value);
-    }
-    
     try {
-      // TODO: Implement actual API call
-      // const response = await axios.post('/api/attendance', formDataToSubmit, {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data',
-      //     // Authorization header might be needed if this is a protected route
-      //   },
-      // });
-      // console.log('Attendance submitted successfully:', response.data);
-      alert('ข้อมูลการลงเวลาถูกส่ง (จำลอง)');
-      // handleClearForm(); // Optionally clear form on success
+      const response = await axios.post('/api/attendance', payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Attendance submitted successfully:', response.data);
+      alert('ข้อมูลการลงเวลาถูกส่งเรียบร้อย');
+      // Optionally clear the form after successful submission
+      // handleClearForm();
     } catch (error) {
       console.error('Error submitting attendance:', error);
       alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${error.response?.data?.msg || error.message}`);
