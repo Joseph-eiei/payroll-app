@@ -1,4 +1,6 @@
 const pool = require('../config/db');
+const fs = require('fs');
+const path = require('path');
 
 // User submits attendance form
 exports.submitAttendanceForm = async (req, res) => {
@@ -173,8 +175,25 @@ exports.updateForm = async (req, res) => {
 exports.deleteForm = async (req, res) => {
   const { id } = req.params;
   try {
-    const del = await pool.query('DELETE FROM AttendanceForms WHERE id=$1 RETURNING id', [id]);
-    if (del.rowCount === 0) return res.status(404).json({ msg: 'Form not found' });
+    // Retrieve attachment name before deleting
+    const { rows } = await pool.query('SELECT image_attachment FROM AttendanceForms WHERE id=$1', [id]);
+    if (rows.length === 0) return res.status(404).json({ msg: 'Form not found' });
+
+    await pool.query('DELETE FROM AttendanceForms WHERE id=$1', [id]);
+
+    // Remove uploaded image if present
+    const img = rows[0].image_attachment;
+    if (img) {
+      const filePath = path.join(__dirname, '../../uploads', img);
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.error('Error deleting image file:', err.message);
+        }
+      }
+    }
+
     res.json({ msg: 'deleted' });
   } catch (err) {
     console.error('Error in deleteForm:', err.message);

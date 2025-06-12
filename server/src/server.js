@@ -1,5 +1,6 @@
 // server/src/server.js
 const path = require('path'); // Import the 'path' module from Node.js
+const fs = require('fs');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
@@ -31,6 +32,14 @@ cron.schedule('0 0 10 * *', async () => {
   const m = prevMonthDate.getMonth() + 1;
   const y = prevMonthDate.getFullYear();
   try {
+    const { rows } = await pool.query(
+      `SELECT image_attachment FROM AttendanceForms
+       WHERE is_verified = true
+       AND EXTRACT(MONTH FROM attendance_date) = $1
+       AND EXTRACT(YEAR FROM attendance_date) = $2`,
+      [m, y]
+    );
+
     await pool.query(
       `DELETE FROM AttendanceForms
        WHERE is_verified = true
@@ -38,6 +47,20 @@ cron.schedule('0 0 10 * *', async () => {
        AND EXTRACT(YEAR FROM attendance_date) = $2`,
       [m, y]
     );
+
+    for (const row of rows) {
+      if (row.image_attachment) {
+        const filePath = path.join(__dirname, '../uploads', row.image_attachment);
+        try {
+          await fs.promises.unlink(filePath);
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
+            console.error('Error deleting old image file:', err.message);
+          }
+        }
+      }
+    }
+
     console.log('Old attendance records deleted for', m, y);
   } catch (err) {
     console.error('Error deleting old attendance records:', err.message);
