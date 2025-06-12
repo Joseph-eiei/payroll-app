@@ -11,6 +11,7 @@ const AdminNavbar = ({ adminUser, onLogout }) => {
         <div className="flex flex-wrap items-center space-x-4">
           {adminUser && <span className="text-sm">ผู้ใช้: {adminUser.username}</span>}
           <Link to="/admin/employees" className="hover:text-gray-300">รายชื่อพนักงาน</Link>
+          <Link to="/admin/attendance-review" className="hover:text-gray-300">ตรวจสอบการลงชื่อ</Link>
           {/* Add more admin links here as needed */}
           <Link to="/" className="hover:text-gray-300">หน้าลงเวลา</Link>
           <button

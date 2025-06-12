@@ -4,6 +4,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db'); // We'll create this next
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT; //|| 3000;
@@ -20,6 +21,27 @@ app.get('/api', (req, res) => {
 // Define Routes
 app.use('/api/auth', require('./routes/authRoutes')); // Mount authentication routes
 app.use('/api/employees', require('./routes/employeeRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+
+// Automatically remove last month's verified attendance records on the 10th of each month
+cron.schedule('0 0 10 * *', async () => {
+  const now = new Date();
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth(), 0); // last day of previous month
+  const m = prevMonthDate.getMonth() + 1;
+  const y = prevMonthDate.getFullYear();
+  try {
+    await pool.query(
+      `DELETE FROM AttendanceForms
+       WHERE is_verified = true
+       AND EXTRACT(MONTH FROM attendance_date) = $1
+       AND EXTRACT(YEAR FROM attendance_date) = $2`,
+      [m, y]
+    );
+    console.log('Old attendance records deleted for', m, y);
+  } catch (err) {
+    console.error('Error deleting old attendance records:', err.message);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
