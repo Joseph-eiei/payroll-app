@@ -5,6 +5,8 @@ import { formatThaiMonth, getNextMonth } from '../utils/date';
 function DeductionManagementPage() {
   const [types, setTypes] = useState([]);
   const [typeForm, setTypeForm] = useState({ id: null, name: '', rate: '', is_active: true });
+  const [advances, setAdvances] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [waterCharges, setWaterCharges] = useState([]);
   const [electricCharges, setElectricCharges] = useState([]);
   const [error, setError] = useState('');
@@ -50,15 +52,43 @@ function DeductionManagementPage() {
     }
   };
 
+  const fetchAdvances = async () => {
+    try {
+      const res = await axios.get('/api/advances');
+      setAdvances(res.data.map(a => ({ ...a, addAmount: '', addDate: new Date().toISOString().slice(0,10), remark: '' })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get('/api/employees');
+      setEmployees(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchTypes();
     fetchCharges();
+    fetchAdvances();
+    fetchEmployees();
   }, []);
 
 
   const handleTypeFormChange = (e) => {
     const { name, value } = e.target;
     setTypeForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAdvanceChange = (idx, field, value) => {
+    setAdvances((prev) => {
+      const arr = [...prev];
+      arr[idx] = { ...arr[idx], [field]: value };
+      return arr;
+    });
   };
 
   const saveType = async (e) => {
@@ -97,6 +127,37 @@ function DeductionManagementPage() {
     } catch (err) {
       console.error(err);
       setError('ไม่สามารถลบรายการได้');
+    }
+  };
+
+  const addAdvance = () => {
+    setAdvances(prev => [
+      ...prev,
+      { id: null, name: '', employee_id: '', total_amount: 0, addAmount: '', addDate: new Date().toISOString().slice(0,10), remark: '' }
+    ]);
+  };
+
+  const saveAdvance = async (adv) => {
+    try {
+      if (adv.id) {
+        await axios.post(`/api/advances/${adv.id}/add`, {
+          amount: adv.addAmount,
+          date: adv.addDate,
+          remark: adv.remark
+        });
+      } else {
+        await axios.post('/api/advances', {
+          name: adv.name,
+          employee_id: adv.employee_id,
+          amount: adv.addAmount,
+          date: adv.addDate,
+          remark: adv.remark
+        });
+      }
+      fetchAdvances();
+    } catch (err) {
+      console.error(err);
+      alert('บันทึกเงินเบิกไม่สำเร็จ');
     }
   };
 
@@ -290,6 +351,60 @@ function DeductionManagementPage() {
               <td className="px-4 py-2 whitespace-nowrap">
                 <button onClick={() => editType(t)} className="text-blue-600 mr-2">แก้ไข</button>
                 <button onClick={() => deleteType(t.id)} className="text-red-600">ลบ</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2 className="text-2xl font-semibold mb-2">เงินเบิก</h2>
+      <button onClick={addAdvance} className="mb-2 bg-green-600 text-white px-3 py-1 rounded">เพิ่มเงินเบิก</button>
+      <table className="min-w-full bg-white shadow mb-8">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-4 py-2 text-left">ชื่อเงินเบิก</th>
+            <th className="px-4 py-2 text-left">เจ้าของ</th>
+            <th className="px-4 py-2 text-left">ยอดคงเหลือ</th>
+            <th className="px-4 py-2 text-left">เพิ่มจำนวน</th>
+            <th className="px-4 py-2 text-left">วันที่</th>
+            <th className="px-4 py-2 text-left">หมายเหตุ</th>
+            <th className="px-4 py-2" />
+          </tr>
+        </thead>
+        <tbody>
+          {advances.map((a, idx) => (
+            <tr key={idx} className="border-t">
+              <td className="px-4 py-2">
+                {a.id ? (
+                  a.name
+                ) : (
+                  <input type="text" value={a.name} onChange={(e)=>handleAdvanceChange(idx,'name',e.target.value)} className="border p-1" />
+                )}
+              </td>
+              <td className="px-4 py-2">
+                {a.id ? (
+                  `${a.first_name} ${a.last_name}`
+                ) : (
+                  <select value={a.employee_id} onChange={(e)=>handleAdvanceChange(idx,'employee_id',e.target.value)} className="border p-1">
+                    <option value="">เลือกพนักงาน</option>
+                    {employees.map(emp=> (
+                      <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
+                    ))}
+                  </select>
+                )}
+              </td>
+              <td className="px-4 py-2">{a.total_amount}</td>
+              <td className="px-4 py-2">
+                <input type="number" value={a.addAmount} onChange={(e)=>handleAdvanceChange(idx,'addAmount',e.target.value)} className="border p-1 w-24" />
+              </td>
+              <td className="px-4 py-2">
+                <input type="date" value={a.addDate} onChange={(e)=>handleAdvanceChange(idx,'addDate',e.target.value)} className="border p-1" />
+              </td>
+              <td className="px-4 py-2">
+                <input type="text" value={a.remark} onChange={(e)=>handleAdvanceChange(idx,'remark',e.target.value)} className="border p-1" />
+              </td>
+              <td className="px-4 py-2 whitespace-nowrap">
+                <button onClick={()=>saveAdvance(a)} className="bg-sky-600 text-white px-3 py-1 rounded">บันทึก</button>
               </td>
             </tr>
           ))}
