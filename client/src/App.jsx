@@ -13,6 +13,8 @@ import AttendanceReviewPage from './pages/AttendanceReviewPage';
 import WorkHistoryPage from './pages/WorkHistoryPage';
 import DeductionManagementPage from './pages/DeductionManagementPage';
 import AdminCreatePage from './pages/AdminCreatePage';
+import AdminListPage from './pages/AdminListPage';
+
 
 // --- Main App Component ---
 function AppContent() {
@@ -94,6 +96,7 @@ function AppContent() {
           <Route path="/admin/history" element={<WorkHistoryPage />} />
           <Route element={<SuperuserRoute />}>
             <Route path="/admin/create-admin" element={<AdminCreatePage />} />
+            <Route path="/admin/admins" element={<AdminListPage />} />
           </Route>
           <Route path="/admin" element={<Navigate to="/admin/employees" replace />} />
         </Route>
