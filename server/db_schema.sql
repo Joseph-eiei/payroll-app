@@ -69,20 +69,34 @@ CREATE TABLE IF NOT EXISTS DeductionTypes (
 
 -- Water charge addresses
 CREATE TABLE IF NOT EXISTS WaterAddresses (
-    address_name TEXT PRIMARY KEY,
+    address_name TEXT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS WaterBills (
+    id SERIAL PRIMARY KEY,
+    address_name TEXT REFERENCES WaterAddresses(address_name) ON DELETE CASCADE,
+    bill_month DATE NOT NULL,
     water_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
     bill_image TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(address_name, bill_month)
 );
 
 -- Electric charge addresses
 CREATE TABLE IF NOT EXISTS ElectricAddresses (
-    address_name TEXT PRIMARY KEY,
+    address_name TEXT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS ElectricBills (
+    id SERIAL PRIMARY KEY,
+    address_name TEXT REFERENCES ElectricAddresses(address_name) ON DELETE CASCADE,
+    bill_month DATE NOT NULL,
     last_unit NUMERIC(10,2) NOT NULL DEFAULT 0,
     current_unit NUMERIC(10,2) NOT NULL DEFAULT 0,
     bill_last_image TEXT,
     bill_current_image TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(address_name, bill_month)
 );
 
 -- Link employee water/electric addresses to respective tables

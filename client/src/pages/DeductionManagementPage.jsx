@@ -21,9 +21,18 @@ function DeductionManagementPage() {
   const fetchCharges = async () => {
     try {
       const waterRes = await axios.get('/api/deductions/water');
-      setWaterCharges(waterRes.data.map((c) => ({ ...c, billFile: null })));
+      setWaterCharges(
+        waterRes.data.map((c) => ({ ...c, billFile: null, bill_month: c.bill_month || new Date().toISOString().slice(0,7) }))
+      );
       const eleRes = await axios.get('/api/deductions/electric');
-      setElectricCharges(eleRes.data.map((c) => ({ ...c, lastBillFile: null, currentBillFile: null })));
+      setElectricCharges(
+        eleRes.data.map((c) => ({
+          ...c,
+          bill_month: c.bill_month || new Date().toISOString().slice(0,7),
+          lastBillFile: null,
+          currentBillFile: null,
+        }))
+      );
     } catch (err) {
       console.error(err);
       setError('โหลดค่าน้ำค่าไฟไม่สำเร็จ');
@@ -111,10 +120,72 @@ function DeductionManagementPage() {
     }
   };
 
+  const addWater = () => {
+    setWaterCharges((prev) => [
+      ...prev,
+      {
+        address_name: '',
+        water_charge: '',
+        bill_image: null,
+        bill_month: new Date().toISOString().slice(0,7),
+        billFile: null,
+        isNew: true,
+      },
+    ]);
+  };
+
+  const addElectric = () => {
+    setElectricCharges((prev) => [
+      ...prev,
+      {
+        address_name: '',
+        last_unit: 0,
+        current_unit: 0,
+        bill_last_image: null,
+        bill_current_image: null,
+        bill_month: new Date().toISOString().slice(0,7),
+        lastBillFile: null,
+        currentBillFile: null,
+        isNew: true,
+      },
+    ]);
+  };
+
+  const deleteWaterCharge = async (charge) => {
+    if (charge.isNew) {
+      setWaterCharges((prev) => prev.filter((c) => c !== charge));
+      return;
+    }
+    if (!window.confirm('ต้องการลบรายการนี้หรือไม่?')) return;
+    try {
+      await axios.delete(`/api/deductions/water/${encodeURIComponent(charge.address_name)}`);
+      fetchCharges();
+    } catch (err) {
+      console.error(err);
+      setError('ไม่สามารถลบรายการค่าน้ำได้');
+    }
+  };
+
+  const deleteElectricCharge = async (charge) => {
+    if (charge.isNew) {
+      setElectricCharges((prev) => prev.filter((c) => c !== charge));
+      return;
+    }
+    if (!window.confirm('ต้องการลบรายการนี้หรือไม่?')) return;
+    try {
+      await axios.delete(`/api/deductions/electric/${encodeURIComponent(charge.address_name)}`);
+      fetchCharges();
+    } catch (err) {
+      console.error(err);
+      setError('ไม่สามารถลบรายการค่าไฟได้');
+    }
+  };
+
   const saveWater = async (c) => {
     try {
       const formData = new FormData();
       formData.append('water_charge', c.water_charge);
+      formData.append('bill_month', c.bill_month);
       if (c.billFile) formData.append('bill', c.billFile);
 
       await axios.put(`/api/deductions/water/${encodeURIComponent(c.address_name)}`,
@@ -132,6 +203,7 @@ function DeductionManagementPage() {
     try {
       const formData = new FormData();
       formData.append('current_unit', c.current_unit);
+      formData.append('bill_month', c.bill_month);
       if (c.lastBillFile) formData.append('lastBill', c.lastBillFile);
       if (c.currentBillFile) formData.append('currentBill', c.currentBillFile);
 
@@ -204,11 +276,13 @@ function DeductionManagementPage() {
         </tbody>
       </table>
 
-      <h2 className="text-2xl font-semibold mb-4">ค่าน้ำ</h2>
+      <h2 className="text-2xl font-semibold mb-2">ค่าน้ำ</h2>
+      <button onClick={addWater} className="mb-2 bg-green-600 text-white px-3 py-1 rounded">เพิ่มค่าน้ำ</button>
       <table className="min-w-full bg-white shadow mb-8">
         <thead className="bg-gray-100">
           <tr>
             <th className="px-4 py-2 text-left">ที่อยู่</th>
+            <th className="px-4 py-2 text-left">เดือน</th>
             <th className="px-4 py-2 text-left">ค่าน้ำ</th>
             <th className="px-4 py-2 text-left">บิลน้ำ</th>
             <th className="px-4 py-2" />
@@ -216,8 +290,27 @@ function DeductionManagementPage() {
         </thead>
         <tbody>
           {waterCharges.map((c, idx) => (
-            <tr key={c.address_name} className="border-t">
-              <td className="px-4 py-2">{c.address_name}</td>
+            <tr key={idx} className="border-t">
+              <td className="px-4 py-2">
+                {c.isNew ? (
+                  <input
+                    type="text"
+                    value={c.address_name}
+                    onChange={(e) => handleChargeChange('water', idx, 'address_name', e.target.value)}
+                    className="border p-1"
+                  />
+                ) : (
+                  c.address_name
+                )}
+              </td>
+              <td className="px-4 py-2">
+                <input
+                  type="month"
+                  value={c.bill_month}
+                  onChange={(e) => handleChargeChange('water', idx, 'bill_month', e.target.value)}
+                  className="border p-1 w-40"
+                />
+              </td>
               <td className="px-4 py-2">
                 <input
                   type="number"
@@ -236,21 +329,24 @@ function DeductionManagementPage() {
                   className="mt-1"
                 />
               </td>
-              <td className="px-4 py-2">
-                <button onClick={() => saveWater(c)} className="bg-sky-600 text-white px-3 py-1 rounded">
+              <td className="px-4 py-2 whitespace-nowrap">
+                <button onClick={() => saveWater(c)} className="bg-sky-600 text-white px-3 py-1 rounded mr-2">
                   บันทึก
                 </button>
+                <button onClick={() => deleteWaterCharge(c)} className="text-red-600">ลบ</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <h2 className="text-2xl font-semibold mb-4">ค่าไฟ</h2>
+      <h2 className="text-2xl font-semibold mb-2">ค่าไฟ</h2>
+      <button onClick={addElectric} className="mb-2 bg-green-600 text-white px-3 py-1 rounded">เพิ่มค่าไฟ</button>
       <table className="min-w-full bg-white shadow">
         <thead className="bg-gray-100">
           <tr>
             <th className="px-4 py-2 text-left">ที่อยู่</th>
+            <th className="px-4 py-2 text-left">เดือน</th>
             <th className="px-4 py-2 text-left">หน่วยก่อนหน้า</th>
             <th className="px-4 py-2 text-left">หน่วยปัจจุบัน</th>
             <th className="px-4 py-2 text-left">บิลก่อน</th>
@@ -261,8 +357,27 @@ function DeductionManagementPage() {
         </thead>
         <tbody>
           {electricCharges.map((c, idx) => (
-            <tr key={c.address_name} className="border-t">
-              <td className="px-4 py-2">{c.address_name}</td>
+            <tr key={idx} className="border-t">
+              <td className="px-4 py-2">
+                {c.isNew ? (
+                  <input
+                    type="text"
+                    value={c.address_name}
+                    onChange={(e) => handleChargeChange('electric', idx, 'address_name', e.target.value)}
+                    className="border p-1"
+                  />
+                ) : (
+                  c.address_name
+                )}
+              </td>
+              <td className="px-4 py-2">
+                <input
+                  type="month"
+                  value={c.bill_month}
+                  onChange={(e) => handleChargeChange('electric', idx, 'bill_month', e.target.value)}
+                  className="border p-1 w-40"
+                />
+              </td>
               <td className="px-4 py-2">{c.last_unit}</td>
               <td className="px-4 py-2">
                 <input
@@ -293,10 +408,11 @@ function DeductionManagementPage() {
                 />
               </td>
               <td className="px-4 py-2">{((c.current_unit - c.last_unit) * 5).toFixed(2)}</td>
-              <td className="px-4 py-2">
-                <button onClick={() => saveElectric(c)} className="bg-sky-600 text-white px-3 py-1 rounded">
+              <td className="px-4 py-2 whitespace-nowrap">
+                <button onClick={() => saveElectric(c)} className="bg-sky-600 text-white px-3 py-1 rounded mr-2">
                   บันทึก
                 </button>
+                <button onClick={() => deleteElectricCharge(c)} className="text-red-600">ลบ</button>
               </td>
             </tr>
           ))}

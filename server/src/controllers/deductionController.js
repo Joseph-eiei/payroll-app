@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const fs = require('fs');
 const path = require('path');
-const { getWaterAddresses, getElectricAddresses } = require('../utils/accommodation');
+
 
 exports.getDeductionTypes = async (req, res) => {
     try {
@@ -80,7 +80,21 @@ exports.deleteDeductionType = async (req, res) => {
 
 exports.getWaterCharges = async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT * FROM WaterAddresses ORDER BY address_name');
+        const { rows } = await pool.query(`
+            SELECT w.address_name,
+                   b.water_charge,
+                   b.bill_image,
+                   TO_CHAR(b.bill_month, 'YYYY-MM') AS bill_month
+            FROM WaterAddresses w
+            LEFT JOIN LATERAL (
+                SELECT water_charge, bill_image, bill_month
+                FROM WaterBills
+                WHERE address_name = w.address_name
+                ORDER BY bill_month DESC
+                LIMIT 1
+            ) b ON true
+            ORDER BY w.address_name
+        `);
         res.json(rows);
     } catch (err) {
         console.error('Error in getWaterCharges:', err.message);
@@ -90,24 +104,22 @@ exports.getWaterCharges = async (req, res) => {
 
 exports.updateWaterCharge = async (req, res) => {
     const { address } = req.params;
-    const { water_charge } = req.body;
+    const { water_charge, bill_month } = req.body;
     const billFile = req.files && req.files.bill ? req.files.bill[0].filename : null;
 
-    const allowed = await getWaterAddresses();
-    if (!allowed.includes(address)) {
-        return res.status(400).json({ msg: 'Invalid water address.' });
-    }
-
     const water = parseFloat(water_charge) || 0;
+    const month = (bill_month ? `${bill_month}-01` : new Date().toISOString().slice(0,7) + '-01');
 
     try {
         await pool.query('BEGIN');
 
+        await pool.query('INSERT INTO WaterAddresses(address_name) VALUES ($1) ON CONFLICT DO NOTHING', [address]);
+
         let oldBill = null;
         if (billFile) {
             const { rows: existing } = await pool.query(
-                'SELECT bill_image FROM WaterAddresses WHERE address_name=$1',
-                [address]
+                'SELECT bill_image FROM WaterBills WHERE address_name=$1 AND bill_month=$2',
+                [address, month]
             );
             if (existing.length) {
                 oldBill = existing[0].bill_image;
@@ -115,16 +127,16 @@ exports.updateWaterCharge = async (req, res) => {
         }
 
         const { rows } = await pool.query(
-            `INSERT INTO WaterAddresses (
-                address_name, water_charge, bill_image, updated_at
-            ) VALUES ($1,$2,$3,CURRENT_TIMESTAMP)
-            ON CONFLICT (address_name)
+            `INSERT INTO WaterBills (
+                address_name, bill_month, water_charge, bill_image, created_at
+            ) VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP)
+            ON CONFLICT (address_name, bill_month)
             DO UPDATE SET
                 water_charge=EXCLUDED.water_charge,
-                bill_image=COALESCE(EXCLUDED.bill_image, WaterAddresses.bill_image),
-                updated_at=CURRENT_TIMESTAMP
+                bill_image=COALESCE(EXCLUDED.bill_image, WaterBills.bill_image),
+                created_at=CURRENT_TIMESTAMP
             RETURNING *`,
-            [address, water, billFile]
+            [address, month, water, billFile]
         );
 
         await pool.query('COMMIT');
@@ -144,7 +156,24 @@ exports.updateWaterCharge = async (req, res) => {
 
 exports.getElectricCharges = async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT *, (current_unit - last_unit)*5 AS total_charge FROM ElectricAddresses ORDER BY address_name');
+        const { rows } = await pool.query(`
+            SELECT e.address_name,
+                   b.last_unit,
+                   b.current_unit,
+                   b.bill_last_image,
+                   b.bill_current_image,
+                   TO_CHAR(b.bill_month, 'YYYY-MM') AS bill_month,
+                   (b.current_unit - b.last_unit) * 5 AS total_charge
+            FROM ElectricAddresses e
+            LEFT JOIN LATERAL (
+                SELECT last_unit, current_unit, bill_last_image, bill_current_image, bill_month
+                FROM ElectricBills
+                WHERE address_name = e.address_name
+                ORDER BY bill_month DESC
+                LIMIT 1
+            ) b ON true
+            ORDER BY e.address_name
+        `);
         res.json(rows);
     } catch (err) {
         console.error('Error in getElectricCharges:', err.message);
@@ -154,43 +183,53 @@ exports.getElectricCharges = async (req, res) => {
 
 exports.updateElectricCharge = async (req, res) => {
     const { address } = req.params;
-    const { current_unit } = req.body;
+    const { current_unit, bill_month } = req.body;
     const lastFile = req.files && req.files.lastBill ? req.files.lastBill[0].filename : null;
     const currentFile = req.files && req.files.currentBill ? req.files.currentBill[0].filename : null;
 
-    const allowed = await getElectricAddresses();
-    if (!allowed.includes(address)) {
-        return res.status(400).json({ msg: 'Invalid electric address.' });
-    }
-
     const current = parseFloat(current_unit) || 0;
+    const month = (bill_month ? `${bill_month}-01` : new Date().toISOString().slice(0,7) + '-01');
 
     try {
         await pool.query('BEGIN');
 
+        await pool.query('INSERT INTO ElectricAddresses(address_name) VALUES ($1) ON CONFLICT DO NOTHING', [address]);
+
         let lastUnit = 0;
+        const { rows: prev } = await pool.query(
+            'SELECT current_unit FROM ElectricBills WHERE address_name=$1 ORDER BY bill_month DESC LIMIT 1',
+            [address]
+        );
+        if (prev.length) {
+            lastUnit = prev[0].current_unit || 0;
+        }
+
         let oldLast = null;
         let oldCurrent = null;
-        const { rows: existing } = await pool.query('SELECT current_unit, bill_current_image, bill_last_image FROM ElectricAddresses WHERE address_name=$1', [address]);
-        if (existing.length) {
-            lastUnit = existing[0].current_unit || 0;
-            oldLast = existing[0].bill_last_image;
-            oldCurrent = existing[0].bill_current_image;
+        if (lastFile || currentFile) {
+            const { rows: existing } = await pool.query(
+                'SELECT bill_last_image, bill_current_image FROM ElectricBills WHERE address_name=$1 AND bill_month=$2',
+                [address, month]
+            );
+            if (existing.length) {
+                oldLast = existing[0].bill_last_image;
+                oldCurrent = existing[0].bill_current_image;
+            }
         }
 
         const { rows } = await pool.query(
-            `INSERT INTO ElectricAddresses (
-                address_name, last_unit, current_unit, bill_last_image, bill_current_image, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP)
-            ON CONFLICT (address_name)
+            `INSERT INTO ElectricBills (
+                address_name, bill_month, last_unit, current_unit, bill_last_image, bill_current_image, created_at
+            ) VALUES ($1,$2,$3,$4,$5,$6,CURRENT_TIMESTAMP)
+            ON CONFLICT (address_name, bill_month)
             DO UPDATE SET
-                last_unit=$2,
-                current_unit=$3,
-                bill_last_image=COALESCE($4, ElectricAddresses.bill_last_image),
-                bill_current_image=COALESCE($5, ElectricAddresses.bill_current_image),
-                updated_at=CURRENT_TIMESTAMP
+                last_unit=$3,
+                current_unit=$4,
+                bill_last_image=COALESCE($5, ElectricBills.bill_last_image),
+                bill_current_image=COALESCE($6, ElectricBills.bill_current_image),
+                created_at=CURRENT_TIMESTAMP
             RETURNING *`,
-            [address, lastUnit, current, lastFile, currentFile]
+            [address, month, lastUnit, current, lastFile, currentFile]
         );
 
         await pool.query('COMMIT');
@@ -209,5 +248,93 @@ exports.updateElectricCharge = async (req, res) => {
         await pool.query('ROLLBACK');
         console.error('Error in updateElectricCharge:', err.message);
         res.status(500).send('Server error while updating electric charge');
+    }
+};
+
+exports.deleteWaterAddress = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const { rows: bills } = await pool.query('SELECT bill_image FROM WaterBills WHERE address_name=$1', [address]);
+        const { rowCount } = await pool.query('DELETE FROM WaterAddresses WHERE address_name=$1', [address]);
+        if (rowCount === 0) return res.status(404).json({ msg: 'Water address not found' });
+
+        for (const b of bills) {
+            if (b.bill_image) {
+                const filePath = path.join(__dirname, '../../uploads', b.bill_image);
+                try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting water bill file:', err.message); }
+            }
+        }
+        res.json({ msg: 'Water address deleted' });
+    } catch (err) {
+        console.error('Error in deleteWaterAddress:', err.message);
+        res.status(500).send('Server error while deleting water address');
+    }
+};
+
+exports.deleteElectricAddress = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const { rows: bills } = await pool.query('SELECT bill_last_image, bill_current_image FROM ElectricBills WHERE address_name=$1', [address]);
+        const { rowCount } = await pool.query('DELETE FROM ElectricAddresses WHERE address_name=$1', [address]);
+        if (rowCount === 0) return res.status(404).json({ msg: 'Electric address not found' });
+
+        for (const b of bills) {
+            if (b.bill_last_image) {
+                const filePath = path.join(__dirname, '../../uploads', b.bill_last_image);
+                try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting electric bill file:', err.message); }
+            }
+            if (b.bill_current_image) {
+                const filePath = path.join(__dirname, '../../uploads', b.bill_current_image);
+                try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting electric bill file:', err.message); }
+            }
+        }
+        res.json({ msg: 'Electric address deleted' });
+    } catch (err) {
+        console.error('Error in deleteElectricAddress:', err.message);
+        res.status(500).send('Server error while deleting electric address');
+    }
+};
+
+exports.getWaterHistory = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const { rows } = await pool.query(
+            `SELECT bill_month, water_charge, bill_image
+             FROM WaterBills
+             WHERE address_name=$1
+             ORDER BY bill_month DESC`,
+            [address]
+        );
+        res.json(rows.map(r => ({
+            bill_month: r.bill_month.toISOString().slice(0,7),
+            water_charge: r.water_charge,
+            bill_image: r.bill_image
+        })));
+    } catch (err) {
+        console.error('Error in getWaterHistory:', err.message);
+        res.status(500).send('Server error while fetching water history');
+    }
+};
+
+exports.getElectricHistory = async (req, res) => {
+    const { address } = req.params;
+    try {
+        const { rows } = await pool.query(
+            `SELECT bill_month, last_unit, current_unit, bill_last_image, bill_current_image
+             FROM ElectricBills
+             WHERE address_name=$1
+             ORDER BY bill_month DESC`,
+            [address]
+        );
+        res.json(rows.map(r => ({
+            bill_month: r.bill_month.toISOString().slice(0,7),
+            last_unit: r.last_unit,
+            current_unit: r.current_unit,
+            bill_last_image: r.bill_last_image,
+            bill_current_image: r.bill_current_image
+        })));
+    } catch (err) {
+        console.error('Error in getElectricHistory:', err.message);
+        res.status(500).send('Server error while fetching electric history');
     }
 };
