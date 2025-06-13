@@ -45,10 +45,12 @@ exports.loginAdmin = async (req, res) => {
                 if (err) throw err;
                 res.json({
                     token,
-                    admin: { // Send back some admin info (optional)
+                    admin: {
                         id: admin.id,
                         username: admin.username,
-                        email: admin.email
+                        email: admin.email,
+                        name: admin.name,
+                        is_superuser: admin.is_superuser
                     }
                 });
             }
