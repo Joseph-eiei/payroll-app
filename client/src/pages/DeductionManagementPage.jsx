@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { formatThaiMonth } from '../utils/date';
+import { formatThaiMonth, getNextMonth } from '../utils/date';
 
 function DeductionManagementPage() {
   const [types, setTypes] = useState([]);
@@ -8,6 +8,7 @@ function DeductionManagementPage() {
   const [waterCharges, setWaterCharges] = useState([]);
   const [electricCharges, setElectricCharges] = useState([]);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const fetchTypes = async () => {
     try {
@@ -23,13 +24,20 @@ function DeductionManagementPage() {
     try {
       const waterRes = await axios.get('/api/deductions/water');
       setWaterCharges(
-        waterRes.data.map((c) => ({ ...c, billFile: null, bill_month: c.bill_month || new Date().toISOString().slice(0,7) }))
+        waterRes.data.map((c) => ({
+          ...c,
+          billFile: null,
+          bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
+        }))
       );
+
       const eleRes = await axios.get('/api/deductions/electric');
       setElectricCharges(
         eleRes.data.map((c) => ({
           ...c,
-          bill_month: c.bill_month || new Date().toISOString().slice(0,7),
+          last_unit: c.current_unit,
+          current_unit: '',
+          bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
           lastBillFile: null,
           currentBillFile: null,
         }))
@@ -44,6 +52,14 @@ function DeductionManagementPage() {
     fetchTypes();
     fetchCharges();
   }, []);
+
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(''), 3000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [success]);
 
   const handleTypeFormChange = (e) => {
     const { name, value } = e.target;
@@ -193,10 +209,13 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
+      setSuccess('บันทึกค่าน้ำสำเร็จ');
+      setError('');
       fetchCharges();
     } catch (err) {
       console.error(err);
       setError('บันทึกค่าน้ำไม่สำเร็จ');
+      setSuccess('');
     }
   };
 
@@ -212,10 +231,13 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
+      setSuccess('บันทึกค่าไฟสำเร็จ');
+      setError('');
       fetchCharges();
     } catch (err) {
       console.error(err);
       setError('บันทึกค่าไฟไม่สำเร็จ');
+      setSuccess('');
     }
   };
 
@@ -438,6 +460,7 @@ function DeductionManagementPage() {
         </tbody>
       </table>
 
+      {success && <div className="text-green-600 mt-4">{success}</div>}
       {error && <div className="text-red-600 mt-4">{error}</div>}
     </div>
   );
