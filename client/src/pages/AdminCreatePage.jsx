@@ -9,9 +9,12 @@ function AdminCreatePage() {
     email: '',
     username: '',
     password: '',
+    confirmPassword: '',
     is_superuser: false,
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -21,13 +24,25 @@ function AdminCreatePage() {
     }));
   };
 
+  // confirmPassword is only for client-side validation and not sent to the server
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (form.password !== form.confirmPassword) {
+      setError('รหัสผ่านไม่ตรงกัน');
+      return;
+    }
     try {
-      await axios.post('/api/admins', form);
+      const payload = {
+        name: form.name,
+        email: form.email,
+        username: form.username,
+        password: form.password,
+        is_superuser: form.is_superuser,
+      };
+      await axios.post('/api/admins', payload);
       alert('สร้างผู้ดูแลสำเร็จ');
-      setForm({ name: '', email: '', username: '', password: '', is_superuser: false });
+      setForm({ name: '', email: '', username: '', password: '', confirmPassword: '', is_superuser: false });
       navigate('/admin/employees');
     } catch (err) {
       console.error(err);
@@ -78,14 +93,43 @@ function AdminCreatePage() {
         </div>
         <div>
           <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            className="border p-2 w-full"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className="border p-2 w-full"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-sky-600"
+            >
+              {showPassword ? 'ซ่อน' : 'แสดง'}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="block mb-1">Confirm Password</label>
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              name="confirmPassword"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              className="border p-2 w-full"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-sky-600"
+            >
+              {showConfirmPassword ? 'ซ่อน' : 'แสดง'}
+            </button>
+          </div>
         </div>
         <div className="flex items-center">
           <input
