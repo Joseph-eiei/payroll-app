@@ -89,7 +89,11 @@ function BillHistoryPage() {
                   <td className="px-4 py-2">{b.water_charge}</td>
                   <td className="px-4 py-2">
                     {b.bill_image && (
-                      <a href={`/uploads/${b.bill_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">ดูรูป</a>
+                      <img
+                        src={`/uploads/${b.bill_image}`}
+                        alt="บิลน้ำ"
+                        className="max-h-24"
+                      />
                     )}
                   </td>
                 </tr>
@@ -120,6 +124,7 @@ function BillHistoryPage() {
                 <th className="px-4 py-2 text-left">หน่วยปัจจุบัน</th>
                 <th className="px-4 py-2 text-left">บิลก่อน</th>
                 <th className="px-4 py-2 text-left">บิลปัจจุบัน</th>
+                <th className="px-4 py-2 text-left">ยอดค่าไฟ</th>
               </tr>
             </thead>
             <tbody>
@@ -130,13 +135,24 @@ function BillHistoryPage() {
                   <td className="px-4 py-2">{b.current_unit}</td>
                   <td className="px-4 py-2">
                     {b.bill_last_image && (
-                      <a href={`/uploads/${b.bill_last_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">ดูรูป</a>
+                      <img
+                        src={`/uploads/${b.bill_last_image}`}
+                        alt="บิลก่อนหน้า"
+                        className="max-h-24"
+                      />
                     )}
                   </td>
                   <td className="px-4 py-2">
                     {b.bill_current_image && (
-                      <a href={`/uploads/${b.bill_current_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600">ดูรูป</a>
+                      <img
+                        src={`/uploads/${b.bill_current_image}`}
+                        alt="บิลปัจจุบัน"
+                        className="max-h-24"
+                      />
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {((b.last_unit - b.current_unit) * 5).toFixed(2)}
                   </td>
                 </tr>
               ))}
