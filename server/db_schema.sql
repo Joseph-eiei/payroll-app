@@ -29,4 +29,30 @@ CREATE TABLE IF NOT EXISTS AttendanceEmployees (
     remarks TEXT
 );
 
+-- Table for different deduction types used in payroll
+CREATE TABLE IF NOT EXISTS DeductionTypes (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Monthly utility charges for employee accommodations
+CREATE TABLE IF NOT EXISTS AccommodationCharges (
+    accommodation_type TEXT PRIMARY KEY,
+    water_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
+    electric_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
+    water_bill_image TEXT,
+    electric_bill_image TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Link employee accommodation details to the charges table
+ALTER TABLE IF EXISTS Employees
+    ADD CONSTRAINT IF NOT EXISTS employees_accommodation_details_fkey
+    FOREIGN KEY (accommodation_details)
+    REFERENCES AccommodationCharges(accommodation_type);
+
 -- Old verified records are automatically purged on the 10th day of each month by the server.

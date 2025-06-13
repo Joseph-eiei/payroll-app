@@ -24,6 +24,7 @@ app.get('/api', (req, res) => {
 app.use('/api/auth', require('./routes/authRoutes')); // Mount authentication routes
 app.use('/api/employees', require('./routes/employeeRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/deductions', require('./routes/deductionRoutes'));
 
 // Automatically remove last month's verified attendance records on the 10th of each month
 cron.schedule('0 0 10 * *', async () => {
