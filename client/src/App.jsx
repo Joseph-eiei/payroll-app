@@ -4,6 +4,7 @@ import axios from 'axios';
 
 import { getAuthToken, getAdminUser } from './utils/auth';
 import ProtectedRoute from './components/ProtectedRoute';
+import SuperuserRoute from './components/SuperuserRoute';
 import AdminNavbar from './components/AdminNavbar';
 import AttendancePage from './pages/AttendancePage';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -11,6 +12,7 @@ import EmployeeListPage from './pages/EmployeeListPage';
 import AttendanceReviewPage from './pages/AttendanceReviewPage';
 import WorkHistoryPage from './pages/WorkHistoryPage';
 import DeductionManagementPage from './pages/DeductionManagementPage';
+import AdminCreatePage from './pages/AdminCreatePage';
 
 // --- Main App Component ---
 function AppContent() {
@@ -90,6 +92,9 @@ function AppContent() {
           <Route path="/admin/attendance-review" element={<AttendanceReviewPage />} />
           <Route path="/admin/deductions" element={<DeductionManagementPage />} />
           <Route path="/admin/history" element={<WorkHistoryPage />} />
+          <Route element={<SuperuserRoute />}>
+            <Route path="/admin/create-admin" element={<AdminCreatePage />} />
+          </Route>
           <Route path="/admin" element={<Navigate to="/admin/employees" replace />} />
         </Route>
 
