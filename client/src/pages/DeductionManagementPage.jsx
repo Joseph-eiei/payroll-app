@@ -325,7 +325,11 @@ function DeductionManagementPage() {
               </td>
               <td className="px-4 py-2">
                 {c.bill_image && (
-                  <a href={`/uploads/${c.bill_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                  <img
+                    src={`/uploads/${c.bill_image}`}
+                    alt="บิลน้ำ"
+                    className="max-h-24 mb-1"
+                  />
                 )}
                 <input
                   type="file"
@@ -396,7 +400,11 @@ function DeductionManagementPage() {
               </td>
               <td className="px-4 py-2">
                 {c.bill_last_image && (
-                  <a href={`/uploads/${c.bill_last_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                  <img
+                    src={`/uploads/${c.bill_last_image}`}
+                    alt="บิลก่อนหน้า"
+                    className="max-h-24 mb-1"
+                  />
                 )}
                 <input
                   type="file"
@@ -406,7 +414,11 @@ function DeductionManagementPage() {
               </td>
               <td className="px-4 py-2">
                 {c.bill_current_image && (
-                  <a href={`/uploads/${c.bill_current_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                  <img
+                    src={`/uploads/${c.bill_current_image}`}
+                    alt="บิลปัจจุบัน"
+                    className="max-h-24 mb-1"
+                  />
                 )}
                 <input
                   type="file"
