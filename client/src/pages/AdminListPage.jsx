@@ -94,7 +94,7 @@ function AdminListPage() {
     <div className="min-h-screen p-6 font-sans text-black">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">จัดการ Admin</h2>
-        <Link to="/admin/create-admin" className="bg-sky-600 text-white px-4 py-2 rounded">สร้าง Admin</Link>
+        <Link to="/admin/create-admin" className="bg-green-500 text-white! px-4 py-2 rounded">สร้าง Admin</Link>
       </div>
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
@@ -116,7 +116,7 @@ function AdminListPage() {
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{admin.email}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                   {showPasswords[admin.id] ? admin.password_hash : '********'}
-                  <button onClick={() => togglePassword(admin.id)} className="ml-2 text-sky-600 text-sm">
+                  <button onClick={() => togglePassword(admin.id)} className="text-sky-600 text-sm" style={{ marginLeft: '8px' }}>
                     {showPasswords[admin.id] ? 'ซ่อน' : 'แสดง'}
                   </button>
                 </td>
