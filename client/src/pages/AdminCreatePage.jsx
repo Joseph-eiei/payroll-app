@@ -40,7 +40,7 @@ function AdminCreatePage() {
   };
 
   return (
-    <div className="min-h-screen p-6 font-sans">
+    <div className="min-h-screen p-6 font-sans text-black">
       <h2 className="text-2xl font-semibold mb-4">สร้างผู้ดูแลระบบ</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
