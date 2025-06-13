@@ -78,6 +78,8 @@ function AttendanceReviewPage() {
       supervisorCheckOut: form.supervisor_check_out || '',
       supervisorOT: form.supervisor_ot || '',
       supervisorRemarks: form.supervisor_remarks || '',
+      currentImage: form.image_attachment || null,
+      imageAttachment: null,
       employees: form.employees.map(e => ({
         employeeId: e.employeeId || '',
         checkIn: e.checkIn || '',
@@ -90,6 +92,10 @@ function AttendanceReviewPage() {
 
   const handleEditChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageChange = (file) => {
+    setEditData(prev => ({ ...prev, imageAttachment: file }));
   };
 
   const handleEmpChange = (index, field, value) => {
@@ -124,6 +130,9 @@ function AttendanceReviewPage() {
       formData.append('supervisorOT', editData.supervisorOT);
       formData.append('supervisorRemarks', editData.supervisorRemarks);
       formData.append('employeeAttendances', JSON.stringify(editData.employees));
+      if (editData.imageAttachment) {
+        formData.append('imageAttachment', editData.imageAttachment);
+      }
 
       await axios.put(`/api/attendance/${editingForm}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -247,6 +256,19 @@ function AttendanceReviewPage() {
                     <label className="block text-xs font-medium text-gray-700 mb-1">หมายเหตุหัวหน้า</label>
                     <input type="text" value={editData.supervisorRemarks} onChange={(e)=>handleEditChange('supervisorRemarks', e.target.value)} className="border p-2 w-full" />
                   </div>
+                </div>
+                {editData.currentImage && (
+                  <div className="mb-2">
+                    <img
+                      src={`/uploads/${editData.currentImage}`}
+                      alt="แนบรูปไซต์"
+                      className="max-h-40 rounded"
+                    />
+                  </div>
+                )}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">แนบรูปใหม่ (ถ้ามี)</label>
+                  <input type="file" onChange={(e)=>handleImageChange(e.target.files[0])} className="border p-2 w-full" />
                 </div>
                 {editData.employees.map((emp, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-7 gap-2">

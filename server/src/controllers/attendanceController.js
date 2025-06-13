@@ -116,6 +116,8 @@ exports.updateForm = async (req, res) => {
     employeeAttendances
   } = req.body;
 
+  const imageFile = req.file ? req.file.filename : null;
+
   const employees = [];
   if (employeeAttendances) {
     try { employees.push(...JSON.parse(employeeAttendances)); } catch (e) {}
@@ -123,6 +125,13 @@ exports.updateForm = async (req, res) => {
 
   try {
     await pool.query('BEGIN');
+
+    let oldImg = null;
+    if (imageFile) {
+      const { rows } = await pool.query('SELECT image_attachment FROM AttendanceForms WHERE id=$1', [id]);
+      if (rows.length) oldImg = rows[0].image_attachment;
+    }
+
     await pool.query(
       `UPDATE AttendanceForms SET
          site_name=$1,
@@ -169,6 +178,18 @@ exports.updateForm = async (req, res) => {
     }
 
     await pool.query('COMMIT');
+
+    if (imageFile && oldImg) {
+      const filePath = path.join(__dirname, '../../uploads', oldImg);
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.error('Error deleting image file:', err.message);
+        }
+      }
+    }
+
     res.json({ msg: 'updated' });
   } catch (err) {
     await pool.query('ROLLBACK');
