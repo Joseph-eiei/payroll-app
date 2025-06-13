@@ -65,18 +65,24 @@ function AdvanceHistoryPage() {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-2 py-1 text-left">วันที่</th>
+                  <th className="px-2 py-1 text-left">ประเภท</th>
                   <th className="px-2 py-1 text-left">จำนวน</th>
                   <th className="px-2 py-1 text-left">หมายเหตุ</th>
                 </tr>
               </thead>
               <tbody>
-                {adv.transactions.map(t => (
-                  <tr key={t.id} className="border-t">
-                    <td className="px-2 py-1">{t.date}</td>
-                    <td className="px-2 py-1">{t.amount}</td>
-                    <td className="px-2 py-1">{t.remark}</td>
-                  </tr>
-                ))}
+                {adv.transactions.map(t => {
+                  const amt = Number(t.amount);
+                  const isAdd = amt >= 0;
+                  return (
+                    <tr key={t.id} className="border-t">
+                      <td className="px-2 py-1">{t.date}</td>
+                      <td className="px-2 py-1">{isAdd ? 'เบิกเพิ่ม' : 'หักเงินเบิก'}</td>
+                      <td className={`px-2 py-1 ${isAdd ? 'text-green-600' : 'text-red-600'}`}>{t.amount}</td>
+                      <td className="px-2 py-1">{t.remark}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           ) : (
