@@ -1,4 +1,32 @@
--- Attendance system database schema
+-- Table storing employee details
+CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    nickname VARCHAR(100),
+    daily_wage NUMERIC(10,2),
+    nationality VARCHAR(50),
+    payment_cycle VARCHAR(50),
+    employee_role VARCHAR(50),
+    status VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    accommodation_details TEXT,
+    CONSTRAINT IF NOT EXISTS employees_accommodation_details_fkey
+        FOREIGN KEY (accommodation_details)
+        REFERENCES AccommodationCharges(accommodation_type);
+
+);
+
+-- Table storing admin user details
+CREATE TABLE public.admins (
+    id INTEGER PRIMARY KEY,
+    username VARCHAR(100),
+    password_hash VARCHAR(255),
+    email VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
 
 -- Table storing attendance form header data
 CREATE TABLE IF NOT EXISTS AttendanceForms (
