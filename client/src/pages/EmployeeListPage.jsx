@@ -30,6 +30,7 @@ function EmployeeListPage() {
     employee_role: 'พนักงาน', bank_name: '', bank_account_number: '',
     bank_account_name: '', start_date: '', status: 'active',
     phone_number: '', email: '', address: '',
+    savings_monthly_amount: '',
     supervisor_admin_id: ''
   };
   const [formData, setFormData] = useState(initialFormData);
@@ -45,7 +46,8 @@ function EmployeeListPage() {
         start_date: employee.start_date ? new Date(employee.start_date).toISOString().slice(0,10) : '',
         water_address: employee.water_address || '',
         electric_address: employee.electric_address || '',
-        supervisor_admin_id: employee.supervisor_admin_id || ''
+        supervisor_admin_id: employee.supervisor_admin_id || '',
+        savings_monthly_amount: employee.savings_monthly_amount != null ? String(employee.savings_monthly_amount) : ''
       };
       setFormData(employeeDataForForm);
     } else {
@@ -109,6 +111,11 @@ function EmployeeListPage() {
         alert("กรุณากรอกค่าแรงต่อวันที่ถูกต้อง (ตัวเลขเท่านั้น และไม่ติดลบ)");
         return;
     }
+    const savingsAmt = formData.savings_monthly_amount === '' ? 0 : parseFloat(formData.savings_monthly_amount);
+    if (isNaN(savingsAmt) || savingsAmt < 0) {
+        alert("ยอดเงินเก็บสะสมต้องเป็นตัวเลขไม่ติดลบ");
+        return;
+    }
      if (formData.thai_id_number && !/^\d{13}$/.test(formData.thai_id_number) && formData.thai_id_number.length > 0) {
         alert("เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก (หากมี)");
         return;
@@ -121,6 +128,7 @@ function EmployeeListPage() {
     const dataToSubmit = {
         ...formData,
         daily_wage: wage,
+        savings_monthly_amount: savingsAmt,
         start_date: formData.start_date === '' ? null : formData.start_date,
         water_address: formData.water_address === '' ? null : formData.water_address,
         electric_address: formData.electric_address === '' ? null : formData.electric_address,
@@ -179,7 +187,7 @@ function EmployeeListPage() {
           <table className="min-w-full divide-y divide-gray-200">
              <thead className="bg-gray-100">
                 <tr>
-                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เชื้อชาติ', 'ที่อยู่น้ำ', 'ที่อยู่ไฟ', 'รอบจ่าย', 'ตำแหน่ง', 'ผู้ดูแล', 'สถานะ', 'Actions'].map(header => (
+                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เงินเก็บ/เดือน', 'เชื้อชาติ', 'ที่อยู่น้ำ', 'ที่อยู่ไฟ', 'รอบจ่าย', 'ตำแหน่ง', 'ผู้ดูแล', 'สถานะ', 'Actions'].map(header => (
                     <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap">
                     {header}
                     </th>
@@ -189,7 +197,7 @@ function EmployeeListPage() {
             <tbody className="bg-white divide-y divide-gray-200">
                 {employees.length === 0 && !isLoading ? (
                 <tr>
-                    <td colSpan="12" className="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลพนักงาน</td>
+                    <td colSpan="13" className="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลพนักงาน</td>
                 </tr>
                 ) : (
                 employees.map((emp) => (
@@ -198,6 +206,7 @@ function EmployeeListPage() {
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{emp.first_name} {emp.last_name}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.nickname || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{emp.daily_wage != null ? parseFloat(emp.daily_wage).toFixed(2) : '-'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{emp.savings_monthly_amount != null ? parseFloat(emp.savings_monthly_amount).toFixed(2) : '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.nationality}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600" title={emp.water_address}>{emp.water_address || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600" title={emp.electric_address}>{emp.electric_address || '-'}</td>
@@ -270,6 +279,10 @@ function EmployeeListPage() {
                   <div>
                     <label htmlFor="daily_wage" className="block text-sm font-medium text-gray-700">ค่าแรง/วัน (บาท) <span className="text-red-500">*</span></label>
                     <input type="number" step="0.01" min="0" name="daily_wage" id="daily_wage" value={formData.daily_wage} onChange={handleFormChange} required className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
+                  </div>
+                  <div>
+                    <label htmlFor="savings_monthly_amount" className="block text-sm font-medium text-gray-700">จำนวนเงินเก็บสะสม/เดือน</label>
+                    <input type="number" step="0.01" min="0" name="savings_monthly_amount" id="savings_monthly_amount" value={formData.savings_monthly_amount} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
                   </div>
                   <div>
                     <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">เชื้อชาติ <span className="text-red-500">*</span></label>

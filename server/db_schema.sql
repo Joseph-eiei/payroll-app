@@ -5,6 +5,7 @@ CREATE TABLE employees (
     last_name VARCHAR(100),
     nickname VARCHAR(100),
     daily_wage NUMERIC(10,2),
+    savings_monthly_amount NUMERIC(10,2) DEFAULT 0,
     nationality VARCHAR(50),
     payment_cycle VARCHAR(50),
     employee_role VARCHAR(50),
@@ -130,6 +131,17 @@ CREATE TABLE IF NOT EXISTS AdvanceTransactions (
     advance_id INTEGER REFERENCES AdvanceLoans(id) ON DELETE CASCADE,
     amount NUMERIC(12,2) NOT NULL,
     transaction_date DATE NOT NULL,
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Savings transactions for monthly employee deposits
+CREATE TABLE IF NOT EXISTS SavingsTransactions (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER REFERENCES Employees(id) ON DELETE CASCADE,
+    amount NUMERIC(12,2) NOT NULL,
+    transaction_date DATE NOT NULL,
+    is_deposit BOOLEAN DEFAULT TRUE,
     remark TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
