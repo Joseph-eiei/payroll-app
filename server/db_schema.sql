@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS AttendanceForms (
     supervisor_ot NUMERIC(5,2),
     supervisor_remarks TEXT,
     image_attachment TEXT,
+    is_sunday BOOLEAN DEFAULT FALSE,
     is_bonus BOOLEAN DEFAULT FALSE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

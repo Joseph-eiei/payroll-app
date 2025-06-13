@@ -155,6 +155,9 @@ function AttendanceReviewPage() {
                 </p>
                 <p className="text-sm text-gray-600">เข้า: {form.supervisor_check_in || '-'} ออก: {form.supervisor_check_out || '-'}</p>
                 <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'} หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                {form.is_sunday && (
+                  <p className="text-sm text-red-600 font-bold">วันอาทิตย์</p>
+                )}
                 {form.image_attachment && (
                   <div className="mt-2">
                     <img

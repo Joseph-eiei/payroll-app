@@ -2,6 +2,11 @@ const pool = require('../config/db');
 const fs = require('fs');
 const path = require('path');
 
+const isSunday = (dateStr) => {
+  const d = new Date(dateStr);
+  return !isNaN(d) && d.getDay() === 0;
+};
+
 // User submits attendance form
 exports.submitAttendanceForm = async (req, res) => {
   const {
@@ -29,8 +34,8 @@ exports.submitAttendanceForm = async (req, res) => {
         site_name, attendance_date, site_supervisor_id,
         supervisor_check_in, supervisor_check_out,
         supervisor_ot, supervisor_remarks, image_attachment,
-        is_bonus, is_verified, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+        is_sunday, is_bonus, is_verified, created_at, updated_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,false,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
       RETURNING id`,
       [
         siteName,
@@ -40,7 +45,8 @@ exports.submitAttendanceForm = async (req, res) => {
         supervisorCheckOut || null,
         supervisorOT || null,
         supervisorRemarks || null,
-        imageFile
+        imageFile,
+        isSunday(attendanceDate)
       ]
     );
     const attendanceId = formRes.rows[0].id;
@@ -127,8 +133,9 @@ exports.updateForm = async (req, res) => {
          supervisor_ot=$6,
          supervisor_remarks=$7,
          image_attachment=COALESCE($8, image_attachment),
+         is_sunday=$9,
          updated_at=CURRENT_TIMESTAMP
-       WHERE id=$9`,
+       WHERE id=$10`,
       [
         siteName,
         attendanceDate,
@@ -138,6 +145,7 @@ exports.updateForm = async (req, res) => {
         supervisorOT || null,
         supervisorRemarks || null,
         imageFile,
+        isSunday(attendanceDate),
         id
       ]
     );
