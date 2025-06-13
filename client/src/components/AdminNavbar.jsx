@@ -10,14 +10,15 @@ const AdminNavbar = ({ adminUser, onLogout }) => {
         </Link>
         <div className="flex flex-wrap items-center space-x-4">
           {adminUser && <span className="text-sm">ผู้ใช้: {adminUser.name}</span>}
+          <Link to="/" className="hover:text-gray-300">หน้าลงเวลา</Link>
           <Link to="/admin/employees" className="hover:text-gray-300">รายชื่อพนักงาน</Link>
           <Link to="/admin/attendance-review" className="hover:text-gray-300">ตรวจสอบการลงชื่อ</Link>
+          <Link to="/admin/history" className="hover:text-gray-300">ประวัติการทำงาน</Link>
           <Link to="/admin/deductions" className="hover:text-gray-300">จัดการหักเงิน</Link>
           {adminUser && adminUser.is_superuser && (
             <Link to="/admin/create-admin" className="hover:text-gray-300">สร้างบัญชี Admin</Link>
           )}
-          <Link to="/admin/history" className="hover:text-gray-300">ประวัติการทำงาน</Link>
-          <Link to="/" className="hover:text-gray-300">หน้าลงเวลา</Link>
+          
           <button
             onClick={onLogout}
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
