@@ -54,6 +54,7 @@ exports.createEmployee = async (req, res) => {
         last_name,
         nickname,
         daily_wage,
+        savings_monthly_amount,
         nationality,
         payment_cycle,
         employee_role,
@@ -71,6 +72,14 @@ exports.createEmployee = async (req, res) => {
     const parsedDailyWage = parseFloat(daily_wage);
     if (isNaN(parsedDailyWage) || parsedDailyWage < 0) {
         return res.status(400).json({ msg: 'Daily wage must be a valid non-negative number.' });
+    }
+
+    let parsedSavings = 0;
+    if (savings_monthly_amount !== undefined) {
+        parsedSavings = parseFloat(savings_monthly_amount);
+        if (isNaN(parsedSavings) || parsedSavings < 0) {
+            return res.status(400).json({ msg: 'Savings amount must be a valid non-negative number.' });
+        }
     }
 
     if (water_address && water_address !== '') {
@@ -105,16 +114,17 @@ exports.createEmployee = async (req, res) => {
         const newEmployee = await pool.query(
             `INSERT INTO Employees (
                 first_name, last_name, nickname,
-                daily_wage, nationality, payment_cycle,
+                daily_wage, savings_monthly_amount, nationality, payment_cycle,
                 employee_role, status, water_address, electric_address,
                 supervisor_admin_id, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`,
             [
                 first_name,
                 last_name,
                 nickname || null,
                 parsedDailyWage,
+                parsedSavings,
                 nationality,
                 payment_cycle,
                 employee_role,
@@ -143,7 +153,7 @@ exports.updateEmployee = async (req, res) => {
 
     const allowedUpdates = [
         'first_name', 'last_name', 'nickname',
-        'daily_wage', 'nationality', 'payment_cycle',
+        'daily_wage', 'savings_monthly_amount', 'nationality', 'payment_cycle',
         'employee_role', 'status', 'water_address', 'electric_address', 'supervisor_admin_id'
     ];
 
@@ -156,6 +166,12 @@ exports.updateEmployee = async (req, res) => {
                     return res.status(400).json({ msg: 'Daily wage must be a valid non-negative number.' });
                 }
                 fieldsToUpdate[key] = wage;
+            } else if (key === 'savings_monthly_amount') {
+                const amt = parseFloat(receivedFields[key]);
+                if (isNaN(amt) || amt < 0) {
+                    return res.status(400).json({ msg: 'Savings amount must be a valid non-negative number.' });
+                }
+                fieldsToUpdate[key] = amt;
             } else if (key === 'water_address') {
                 const w = receivedFields[key];
                 if (w && w !== '') {
@@ -223,7 +239,7 @@ exports.updateEmployee = async (req, res) => {
     }
     values.push(id);
 
-    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`;
+    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`;
 
     try {
         const updatedEmployee = await pool.query(queryText, values);
