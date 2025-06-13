@@ -66,6 +66,9 @@ function WorkHistoryPage() {
                     <p className="text-sm text-gray-600">ออก: {form.supervisor_check_out || '-'} น.</p>
                     <p className="text-sm text-gray-600">OT: {form.supervisor_ot || '-'}</p>
                     <p className="text-sm text-gray-600">หมายเหตุ: {form.supervisor_remarks || '-'}</p>
+                    {form.is_sunday && (
+                      <p className="text-sm text-red-600 font-bold">วันอาทิตย์</p>
+                    )}
                     <p className="text-sm text-black-600 font-bold">เบี้ยขยัน: {form.is_bonus ? 'ใช่' : 'ไม่ใช่'}</p>
                     {form.image_attachment && (
                       <div className="mt-2">
