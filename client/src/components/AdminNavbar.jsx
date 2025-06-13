@@ -9,12 +9,12 @@ const AdminNavbar = ({ adminUser, onLogout }) => {
           ระบบจัดการพนักงาน
         </Link>
         <div className="flex flex-wrap items-center space-x-4">
-          {adminUser && <span className="text-sm">ผู้ใช้: {adminUser.username}</span>}
+          {adminUser && <span className="text-sm">ผู้ใช้: {adminUser.name}</span>}
           <Link to="/admin/employees" className="hover:text-gray-300">รายชื่อพนักงาน</Link>
           <Link to="/admin/attendance-review" className="hover:text-gray-300">ตรวจสอบการลงชื่อ</Link>
           <Link to="/admin/deductions" className="hover:text-gray-300">จัดการหักเงิน</Link>
           {adminUser && adminUser.is_superuser && (
-            <Link to="/admin/create-admin" className="hover:text-gray-300">สร้างผู้ดูแล</Link>
+            <Link to="/admin/create-admin" className="hover:text-gray-300">สร้างบัญชี Admin</Link>
           )}
           <Link to="/admin/history" className="hover:text-gray-300">ประวัติการทำงาน</Link>
           <Link to="/" className="hover:text-gray-300">หน้าลงเวลา</Link>

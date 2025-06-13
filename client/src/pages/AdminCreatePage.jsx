@@ -41,7 +41,7 @@ function AdminCreatePage() {
 
   return (
     <div className="min-h-screen p-6 font-sans text-black">
-      <h2 className="text-2xl font-semibold mb-4">สร้างผู้ดูแลระบบ</h2>
+      <h2 className="text-2xl font-semibold mb-4">สร้างบัญชี Admin</h2>
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>
           <label className="block mb-1">ชื่อ</label>
@@ -66,7 +66,7 @@ function AdminCreatePage() {
           />
         </div>
         <div>
-          <label className="block mb-1">ชื่อผู้ใช้</label>
+          <label className="block mb-1">Username</label>
           <input
             type="text"
             name="username"
@@ -77,7 +77,7 @@ function AdminCreatePage() {
           />
         </div>
         <div>
-          <label className="block mb-1">รหัสผ่าน</label>
+          <label className="block mb-1">Password</label>
           <input
             type="password"
             name="password"
