@@ -12,7 +12,7 @@ function EmployeeListPage() {
   const initialFormData = {
     employee_code: '', first_name: '', last_name: '', nickname: '',
     thai_id_number: '', daily_wage: '', nationality: 'ไทย',
-    accommodation_details: '', payment_cycle: 'รายเดือน',
+    water_address: '', electric_address: '', payment_cycle: 'รายเดือน',
     employee_role: 'พนักงาน', bank_name: '', bank_account_number: '',
     bank_account_name: '', start_date: '', status: 'active',
     phone_number: '', email: '', address: '',
@@ -27,7 +27,8 @@ function EmployeeListPage() {
         ...employee,        
         daily_wage: employee.daily_wage != null ? String(employee.daily_wage) : '',
         start_date: employee.start_date ? new Date(employee.start_date).toISOString().slice(0,10) : '',
-        accommodation_details: employee.accommodation_details || '', 
+        water_address: employee.water_address || '',
+        electric_address: employee.electric_address || '',
       };
       setFormData(employeeDataForForm);
     } else {
@@ -92,9 +93,10 @@ function EmployeeListPage() {
     
     const dataToSubmit = {
         ...formData,
-        daily_wage: wage, 
+        daily_wage: wage,
         start_date: formData.start_date === '' ? null : formData.start_date,
-        accommodation_details: formData.accommodation_details === '' ? null : formData.accommodation_details,
+        water_address: formData.water_address === '' ? null : formData.water_address,
+        electric_address: formData.electric_address === '' ? null : formData.electric_address,
     };
 
     try {
@@ -149,7 +151,7 @@ function EmployeeListPage() {
           <table className="min-w-full divide-y divide-gray-200">
              <thead className="bg-gray-100">
                 <tr>
-                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เชื้อชาติ', 'ที่พัก', 'รอบจ่าย', 'ตำแหน่ง', 'สถานะ', 'Actions'].map(header => (
+                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เชื้อชาติ', 'ที่อยู่น้ำ', 'ที่อยู่ไฟ', 'รอบจ่าย', 'ตำแหน่ง', 'สถานะ', 'Actions'].map(header => (
                     <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap">
                     {header}
                     </th>
@@ -169,7 +171,8 @@ function EmployeeListPage() {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.nickname || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 text-right">{emp.daily_wage != null ? parseFloat(emp.daily_wage).toFixed(2) : '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.nationality}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 max-w-[150px] truncate" title={emp.accommodation_details}>{emp.accommodation_details || '-'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600" title={emp.water_address}>{emp.water_address || '-'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600" title={emp.electric_address}>{emp.electric_address || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.payment_cycle}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                         <span
@@ -273,16 +276,31 @@ function EmployeeListPage() {
                     <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">วันที่เริ่มงาน</label>
                     <input type="date" name="start_date" id="start_date" value={formData.start_date} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
                   </div>
-                  <div className="md:col-span-2">
-                    <label htmlFor="accommodation_details" className="block text-sm font-medium text-gray-700">ที่พัก</label>
+                  <div>
+                    <label htmlFor="water_address" className="block text-sm font-medium text-gray-700">ที่อยู่น้ำ</label>
                     <select
-                        name="accommodation_details"
-                        id="accommodation_details"
-                        value={formData.accommodation_details || ''} 
+                        name="water_address"
+                        id="water_address"
+                        value={formData.water_address || ''}
                         onChange={handleFormChange}
                         className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white"
                     >
-                        <option value="">-- เลือกประเภทที่พัก --</option>
+                        <option value="">-- เลือกที่อยู่ค่าน้ำ --</option>
+                        <option value="โกดัง">โกดัง</option>
+                        <option value="แคมป์ก่อสร้าง">แคมป์ก่อสร้าง</option>
+                        <option value="โรงงาน">โรงงาน</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="electric_address" className="block text-sm font-medium text-gray-700">ที่อยู่ไฟ</label>
+                    <select
+                        name="electric_address"
+                        id="electric_address"
+                        value={formData.electric_address || ''}
+                        onChange={handleFormChange}
+                        className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white"
+                    >
+                        <option value="">-- เลือกที่อยู่ค่าไฟ --</option>
                         <option value="โกดัง">โกดัง</option>
                         <option value="แคมป์ก่อสร้าง">แคมป์ก่อสร้าง</option>
                         <option value="โรงงาน">โรงงาน</option>
