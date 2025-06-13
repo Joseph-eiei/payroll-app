@@ -9,7 +9,20 @@ function EmployeeListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
   const [adminOptions, setAdminOptions] = useState([]);
-  
+  const [waterAddresses, setWaterAddresses] = useState([]);
+  const [electricAddresses, setElectricAddresses] = useState([]);
+
+  const fetchAddresses = async () => {
+    try {
+      const wRes = await axios.get('/api/deductions/water');
+      const eRes = await axios.get('/api/deductions/electric');
+      setWaterAddresses(wRes.data.map(d => d.address_name));
+      setElectricAddresses(eRes.data.map(d => d.address_name));
+    } catch (err) {
+      console.error('Fetch addresses error:', err);
+    }
+  };
+
   const initialFormData = {
     employee_code: '', first_name: '', last_name: '', nickname: '',
     thai_id_number: '', daily_wage: '', nationality: 'ไทย',
@@ -22,6 +35,7 @@ function EmployeeListPage() {
   const [formData, setFormData] = useState(initialFormData);
 
   const handleOpenModal = (employee = null) => {
+    fetchAddresses(); // Fetch addresses when opening the modal
     setCurrentEmployee(employee);
     if (employee) {
       const employeeDataForForm = {
@@ -57,6 +71,7 @@ function EmployeeListPage() {
 
   useEffect(() => {
     fetchEmployees();
+    fetchAddresses();
     const fetchAdmins = async () => {
       try {
         const res = await axios.get('/api/admins/names');
@@ -309,9 +324,9 @@ function EmployeeListPage() {
                         className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white"
                     >
                         <option value="">-- เลือกที่อยู่ค่าน้ำ --</option>
-                        <option value="โกดัง">โกดัง</option>
-                        <option value="แคมป์ก่อสร้าง">แคมป์ก่อสร้าง</option>
-                        <option value="โรงงาน">โรงงาน</option>
+                        {waterAddresses.map(addr => (
+                          <option key={addr} value={addr}>{addr}</option>
+                        ))}
                     </select>
                   </div>
                   <div>
@@ -324,9 +339,9 @@ function EmployeeListPage() {
                         className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white"
                     >
                         <option value="">-- เลือกที่อยู่ค่าไฟ --</option>
-                        <option value="โกดัง">โกดัง</option>
-                        <option value="แคมป์ก่อสร้าง">แคมป์ก่อสร้าง</option>
-                        <option value="โรงงาน">โรงงาน</option>
+                        {electricAddresses.map(addr => (
+                          <option key={addr} value={addr}>{addr}</option>
+                        ))}
                     </select>
                   </div>
                   <div className="md:col-span-2"><hr className="my-2"/> <p className="text-sm text-gray-600">ข้อมูลติดต่อ (ไม่บังคับ)</p></div>
