@@ -22,29 +22,31 @@ function DeductionManagementPage() {
   const fetchCharges = async () => {
     try {
       const waterRes = await axios.get('/api/deductions/water');
-      setWaterCharges(
-        waterRes.data.map((c) => ({
-          ...c,
-          billFile: null,
-          water_charge: '',
-          bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
-        }))
-      );
+      const waterData = waterRes.data.map((c) => ({
+        ...c,
+        billFile: null,
+        water_charge: '',
+        bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
+      }));
 
       const eleRes = await axios.get('/api/deductions/electric');
-      setElectricCharges(
-        eleRes.data.map((c) => ({
-          ...c,
-          last_unit: c.current_unit,
-          current_unit: '',
-          bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
-          lastBillFile: null,
-          currentBillFile: null,
-        }))
-      );
+      const electricData = eleRes.data.map((c) => ({
+        ...c,
+        last_unit: c.current_unit,
+        current_unit: '',
+        bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
+        lastBillFile: null,
+        currentBillFile: null,
+      }));
+
+      setWaterCharges(waterData);
+      setElectricCharges(electricData);
+
+      return { waterData, electricData };
     } catch (err) {
       console.error(err);
       setError('โหลดค่าน้ำค่าไฟไม่สำเร็จ');
+      return { waterData: [], electricData: [] };
     }
   };
 
@@ -202,7 +204,10 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-      fetchCharges();
+      const { waterData } = await fetchCharges();
+      setWaterCharges(waterData.map((w) =>
+        w.address_name === c.address_name ? { ...w, bill_image: null } : w
+      ));
       alert('บันทึกค่าน้ำสำเร็จ');
     } catch (err) {
       console.error(err);
@@ -222,7 +227,10 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-      fetchCharges();
+      const { electricData } = await fetchCharges();
+      setElectricCharges(electricData.map((e) =>
+        e.address_name === c.address_name ? { ...e, bill_last_image: null, bill_current_image: null } : e
+      ));
       alert('บันทึกค่าไฟสำเร็จ');
     } catch (err) {
       console.error(err);
