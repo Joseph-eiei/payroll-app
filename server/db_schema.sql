@@ -9,8 +9,8 @@ CREATE TABLE employees (
     payment_cycle VARCHAR(50),
     employee_role VARCHAR(50),
     status VARCHAR(50),
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     accommodation_details TEXT,
     CONSTRAINT IF NOT EXISTS employees_accommodation_details_fkey
         FOREIGN KEY (accommodation_details)
@@ -24,8 +24,8 @@ CREATE TABLE public.admins (
     username VARCHAR(100),
     password_hash VARCHAR(255),
     email VARCHAR(100),
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table storing attendance form header data
