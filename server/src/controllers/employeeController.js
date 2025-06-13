@@ -9,8 +9,10 @@ const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนัก�
 exports.getAllEmployees = async (req, res) => {
     try {
         const query = `
-            SELECT *
-            FROM Employees ORDER BY created_at DESC
+            SELECT e.*, a.name AS supervisor_name
+            FROM Employees e
+            LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
+            ORDER BY e.created_at DESC
         `;
         const allEmployees = await pool.query(query);
         res.json(allEmployees.rows);
@@ -29,9 +31,11 @@ exports.getEmployeesByRole = async (req, res) => {
 
     try {
         const query = `
-            SELECT *
-            FROM Employees
-            WHERE employee_role = $1 ORDER BY created_at DESC
+            SELECT e.*, a.name AS supervisor_name
+            FROM Employees e
+            LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
+            WHERE e.employee_role = $1
+            ORDER BY e.created_at DESC
         `;
         const employees = await pool.query(query, [role]);
         res.json(employees.rows);
@@ -55,7 +59,8 @@ exports.createEmployee = async (req, res) => {
         employee_role,
         status,
         water_address,
-        electric_address
+        electric_address,
+        supervisor_admin_id
     } = req.body;
 
     // Validation for required fields
@@ -82,6 +87,15 @@ exports.createEmployee = async (req, res) => {
         }
     }
 
+    let supervisorIdFinal = null;
+    if (supervisor_admin_id && supervisor_admin_id !== '') {
+        const parsedId = parseInt(supervisor_admin_id);
+        if (isNaN(parsedId)) {
+            return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
+        }
+        supervisorIdFinal = parsedId;
+    }
+
     // Validate employee_role
     if (!ALLOWED_EMPLOYEE_ROLES.includes(employee_role)) {
         return res.status(400).json({ msg: `Invalid employee role. Allowed values are: ${ALLOWED_EMPLOYEE_ROLES.join(', ')}.` });
@@ -93,9 +107,9 @@ exports.createEmployee = async (req, res) => {
                 first_name, last_name, nickname,
                 daily_wage, nationality, payment_cycle,
                 employee_role, status, water_address, electric_address,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, water_address, electric_address`,
+                supervisor_admin_id, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`,
             [
                 first_name,
                 last_name,
@@ -106,7 +120,8 @@ exports.createEmployee = async (req, res) => {
                 employee_role,
                 status,
                 water_address || null,
-                electric_address || null
+                electric_address || null,
+                supervisorIdFinal
             ]
         );
         res.status(201).json(newEmployee.rows[0]);
@@ -129,7 +144,7 @@ exports.updateEmployee = async (req, res) => {
     const allowedUpdates = [
         'first_name', 'last_name', 'nickname',
         'daily_wage', 'nationality', 'payment_cycle',
-        'employee_role', 'status', 'water_address', 'electric_address'
+        'employee_role', 'status', 'water_address', 'electric_address', 'supervisor_admin_id'
     ];
 
     const fieldsToUpdate = {};
@@ -169,6 +184,15 @@ exports.updateEmployee = async (req, res) => {
                      return res.status(400).json({ msg: `Invalid employee role. Allowed values are: ${ALLOWED_EMPLOYEE_ROLES.join(', ')}.` });
                 }
                 fieldsToUpdate[key] = roleValue;
+            } else if (key === 'supervisor_admin_id') {
+                const supId = receivedFields[key];
+                if (supId === '' || supId === null || typeof supId === 'undefined') {
+                    fieldsToUpdate[key] = null;
+                } else if (isNaN(parseInt(supId))) {
+                    return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
+                } else {
+                    fieldsToUpdate[key] = parseInt(supId);
+                }
             }
             else if (receivedFields[key] === '' && (key === 'nickname')) {
                 fieldsToUpdate[key] = null;
@@ -199,7 +223,7 @@ exports.updateEmployee = async (req, res) => {
     }
     values.push(id);
 
-    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, water_address, electric_address`;
+    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`;
 
     try {
         const updatedEmployee = await pool.query(queryText, values);

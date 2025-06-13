@@ -45,6 +45,18 @@ exports.getAllAdmins = async (req, res) => {
     }
 };
 
+exports.getAdminNames = async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            'SELECT id, name FROM Admins ORDER BY name'
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error('Error in getAdminNames:', err.message);
+        res.status(500).send('Server error while fetching admin names');
+    }
+};
+
 exports.updateAdmin = async (req, res) => {
     const { id } = req.params;
     const { name, email, username, password, is_superuser } = req.body;
