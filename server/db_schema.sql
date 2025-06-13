@@ -25,7 +25,9 @@ CREATE TABLE public.admins (
     password_hash VARCHAR(255),
     email VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    name VARCHAR(100) NOT NULL,
+    is_superuser BOOLEAN DEFAULT FALSE,
 );
 
 -- Table storing attendance form header data
