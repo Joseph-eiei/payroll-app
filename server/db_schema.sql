@@ -12,7 +12,8 @@ CREATE TABLE employees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     water_address TEXT,
-    electric_address TEXT
+    electric_address TEXT,
+    supervisor_admin_id INTEGER REFERENCES Admins(id)
 
 );
 
@@ -108,5 +109,7 @@ ALTER TABLE IF EXISTS Employees
     ADD CONSTRAINT IF NOT EXISTS employees_electric_address_fkey
         FOREIGN KEY (electric_address)
         REFERENCES ElectricAddresses(address_name);
+ALTER TABLE IF EXISTS Employees
+    ADD COLUMN IF NOT EXISTS supervisor_admin_id INTEGER REFERENCES Admins(id);
 
 -- Old verified records are automatically purged on the 10th day of each month by the server.

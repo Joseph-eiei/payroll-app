@@ -8,6 +8,7 @@ function EmployeeListPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [adminOptions, setAdminOptions] = useState([]);
   
   const initialFormData = {
     employee_code: '', first_name: '', last_name: '', nickname: '',
@@ -16,6 +17,7 @@ function EmployeeListPage() {
     employee_role: 'พนักงาน', bank_name: '', bank_account_number: '',
     bank_account_name: '', start_date: '', status: 'active',
     phone_number: '', email: '', address: '',
+    supervisor_admin_id: ''
   };
   const [formData, setFormData] = useState(initialFormData);
 
@@ -29,6 +31,7 @@ function EmployeeListPage() {
         start_date: employee.start_date ? new Date(employee.start_date).toISOString().slice(0,10) : '',
         water_address: employee.water_address || '',
         electric_address: employee.electric_address || '',
+        supervisor_admin_id: employee.supervisor_admin_id || ''
       };
       setFormData(employeeDataForForm);
     } else {
@@ -52,8 +55,17 @@ function EmployeeListPage() {
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchEmployees();
+    const fetchAdmins = async () => {
+      try {
+        const res = await axios.get('/api/admins/names');
+        setAdminOptions(res.data);
+      } catch (e) {
+        console.error('Fetch admins error:', e);
+      }
+    };
+    fetchAdmins();
   }, []);
 
   const handleCloseModal = () => { 
@@ -97,6 +109,7 @@ function EmployeeListPage() {
         start_date: formData.start_date === '' ? null : formData.start_date,
         water_address: formData.water_address === '' ? null : formData.water_address,
         electric_address: formData.electric_address === '' ? null : formData.electric_address,
+        supervisor_admin_id: formData.supervisor_admin_id === '' ? null : formData.supervisor_admin_id,
     };
 
     try {
@@ -151,7 +164,7 @@ function EmployeeListPage() {
           <table className="min-w-full divide-y divide-gray-200">
              <thead className="bg-gray-100">
                 <tr>
-                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เชื้อชาติ', 'ที่อยู่น้ำ', 'ที่อยู่ไฟ', 'รอบจ่าย', 'ตำแหน่ง', 'สถานะ', 'Actions'].map(header => (
+                {['ID', 'ชื่อ-นามสกุล', 'ชื่อเล่น', 'ค่าแรง/วัน (฿)', 'เชื้อชาติ', 'ที่อยู่น้ำ', 'ที่อยู่ไฟ', 'รอบจ่าย', 'ตำแหน่ง', 'ผู้ดูแล', 'สถานะ', 'Actions'].map(header => (
                     <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider whitespace-nowrap">
                     {header}
                     </th>
@@ -161,7 +174,7 @@ function EmployeeListPage() {
             <tbody className="bg-white divide-y divide-gray-200">
                 {employees.length === 0 && !isLoading ? (
                 <tr>
-                    <td colSpan="10" className="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลพนักงาน</td>
+                    <td colSpan="12" className="px-6 py-10 text-center text-gray-500">ไม่พบข้อมูลพนักงาน</td>
                 </tr>
                 ) : (
                 employees.map((emp) => (
@@ -189,10 +202,11 @@ function EmployeeListPage() {
                         {emp.employee_role}
                         </span>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{emp.supervisor_name || '-'}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            emp.status === 'active' ? 'bg-green-100 text-green-800' : 
-                            emp.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' : 
+                            emp.status === 'active' ? 'bg-green-100 text-green-800' :
+                            emp.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-red-100 text-red-800'}`}>
                         {emp.status === 'active' ? 'ทำงาน' : emp.status === 'inactive' ? 'พักงาน' : 'สิ้นสุดสัญญา'}
                         </span>
@@ -262,6 +276,15 @@ function EmployeeListPage() {
                       <option value="พนักงาน">พนักงาน</option>
                       <option value="หัวหน้างาน">หัวหน้างาน</option>
                       <option value="ช่าง">ช่าง</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="supervisor_admin_id" className="block text-sm font-medium text-gray-700">ผู้ดูแล</label>
+                    <select name="supervisor_admin_id" id="supervisor_admin_id" value={formData.supervisor_admin_id} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2 bg-white">
+                      <option value="">- เลือกผู้ดูแล -</option>
+                      {adminOptions.map(ad => (
+                        <option key={ad.id} value={ad.id}>{ad.name}</option>
+                      ))}
                     </select>
                   </div>
                    <div>
