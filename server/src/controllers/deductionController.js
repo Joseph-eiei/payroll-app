@@ -299,17 +299,13 @@ exports.getWaterHistory = async (req, res) => {
     const { address } = req.params;
     try {
         const { rows } = await pool.query(
-            `SELECT bill_month, water_charge, bill_image
+            `SELECT TO_CHAR(bill_month, 'YYYY-MM') AS bill_month, water_charge, bill_image
              FROM WaterBills
              WHERE address_name=$1
              ORDER BY bill_month DESC`,
             [address]
         );
-        res.json(rows.map(r => ({
-            bill_month: r.bill_month.toISOString().slice(0,7),
-            water_charge: r.water_charge,
-            bill_image: r.bill_image
-        })));
+        res.json(rows);
     } catch (err) {
         console.error('Error in getWaterHistory:', err.message);
         res.status(500).send('Server error while fetching water history');
@@ -320,19 +316,13 @@ exports.getElectricHistory = async (req, res) => {
     const { address } = req.params;
     try {
         const { rows } = await pool.query(
-            `SELECT bill_month, last_unit, current_unit, bill_last_image, bill_current_image
+            `SELECT TO_CHAR(bill_month, 'YYYY-MM') AS bill_month, last_unit, current_unit, bill_last_image, bill_current_image
              FROM ElectricBills
              WHERE address_name=$1
              ORDER BY bill_month DESC`,
             [address]
         );
-        res.json(rows.map(r => ({
-            bill_month: r.bill_month.toISOString().slice(0,7),
-            last_unit: r.last_unit,
-            current_unit: r.current_unit,
-            bill_last_image: r.bill_last_image,
-            bill_current_image: r.bill_current_image
-        })));
+        res.json(rows);
     } catch (err) {
         console.error('Error in getElectricHistory:', err.message);
         res.status(500).send('Server error while fetching electric history');

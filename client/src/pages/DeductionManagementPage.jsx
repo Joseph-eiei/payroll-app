@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { formatThaiMonth } from '../utils/date';
 
 function DeductionManagementPage() {
   const [types, setTypes] = useState([]);
@@ -310,6 +311,9 @@ function DeductionManagementPage() {
                   onChange={(e) => handleChargeChange('water', idx, 'bill_month', e.target.value)}
                   className="border p-1 w-40"
                 />
+                <div className="text-xs text-gray-600 mt-1">
+                  {formatThaiMonth(c.bill_month)}
+                </div>
               </td>
               <td className="px-4 py-2">
                 <input
@@ -377,6 +381,9 @@ function DeductionManagementPage() {
                   onChange={(e) => handleChargeChange('electric', idx, 'bill_month', e.target.value)}
                   className="border p-1 w-40"
                 />
+                <div className="text-xs text-gray-600 mt-1">
+                  {formatThaiMonth(c.bill_month)}
+                </div>
               </td>
               <td className="px-4 py-2">{c.last_unit}</td>
               <td className="px-4 py-2">
