@@ -113,3 +113,23 @@ ALTER TABLE IF EXISTS Employees
     ADD COLUMN IF NOT EXISTS supervisor_admin_id INTEGER REFERENCES Admins(id);
 
 -- Old verified records are automatically purged on the 10th day of each month by the server.
+
+-- Cash advance main table
+CREATE TABLE IF NOT EXISTS AdvanceLoans (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    employee_id INTEGER REFERENCES Employees(id),
+    total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions for each cash advance (deposit or deduction)
+CREATE TABLE IF NOT EXISTS AdvanceTransactions (
+    id SERIAL PRIMARY KEY,
+    advance_id INTEGER REFERENCES AdvanceLoans(id) ON DELETE CASCADE,
+    amount NUMERIC(12,2) NOT NULL,
+    transaction_date DATE NOT NULL,
+    remark TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

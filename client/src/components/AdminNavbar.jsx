@@ -15,6 +15,7 @@ const AdminNavbar = ({ adminUser, onLogout }) => {
           <Link to="/admin/attendance-review" className="hover:text-gray-300">ตรวจสอบการลงชื่อ</Link>
           <Link to="/admin/history" className="hover:text-gray-300">ประวัติการทำงาน</Link>
           <Link to="/admin/deductions" className="hover:text-gray-300">จัดการหักเงิน</Link>
+          <Link to="/admin/advance-history" className="hover:text-gray-300">ประวัติเงินเบิก</Link>
           <Link to="/admin/bill-history" className="hover:text-gray-300">ประวัติค่าน้ำไฟ</Link>
           {adminUser && adminUser.is_superuser && (
             <>
