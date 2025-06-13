@@ -152,7 +152,7 @@ function BillHistoryPage() {
                     )}
                   </td>
                   <td className="px-4 py-2">
-                    {((b.last_unit - b.current_unit) * 5).toFixed(2)}
+                    {((b.current_unit - b.last_unit) * 5).toFixed(2)}
                   </td>
                 </tr>
               ))}
