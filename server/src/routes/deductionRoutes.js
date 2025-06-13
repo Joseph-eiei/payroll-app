@@ -12,15 +12,23 @@ router.post('/types', authMiddleware, deductionController.createDeductionType);
 router.put('/types/:id', authMiddleware, deductionController.updateDeductionType);
 router.delete('/types/:id', authMiddleware, deductionController.deleteDeductionType);
 
-router.get('/accommodation', authMiddleware, deductionController.getAccommodationCharges);
+router.get('/water', authMiddleware, deductionController.getWaterCharges);
 router.put(
-  '/accommodation/:type',
+  '/water/:address',
+  authMiddleware,
+  upload.fields([{ name: 'bill', maxCount: 1 }]),
+  deductionController.updateWaterCharge
+);
+
+router.get('/electric', authMiddleware, deductionController.getElectricCharges);
+router.put(
+  '/electric/:address',
   authMiddleware,
   upload.fields([
-    { name: 'waterBill', maxCount: 1 },
-    { name: 'electricBill', maxCount: 1 },
+    { name: 'lastBill', maxCount: 1 },
+    { name: 'currentBill', maxCount: 1 },
   ]),
-  deductionController.updateAccommodationCharge
+  deductionController.updateElectricCharge
 );
 
 module.exports = router;

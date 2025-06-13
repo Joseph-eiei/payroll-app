@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const fs = require('fs');
 const path = require('path');
-const { getAccommodationTypes } = require('../utils/accommodation');
+const { getWaterAddresses, getElectricAddresses } = require('../utils/accommodation');
 
 exports.getDeductionTypes = async (req, res) => {
     try {
@@ -78,76 +78,136 @@ exports.deleteDeductionType = async (req, res) => {
     }
 };
 
-exports.getAccommodationCharges = async (req, res) => {
+exports.getWaterCharges = async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT * FROM AccommodationCharges ORDER BY accommodation_type');
+        const { rows } = await pool.query('SELECT * FROM WaterAddresses ORDER BY address_name');
         res.json(rows);
     } catch (err) {
-        console.error('Error in getAccommodationCharges:', err.message);
-        res.status(500).send('Server error while fetching accommodation charges');
+        console.error('Error in getWaterCharges:', err.message);
+        res.status(500).send('Server error while fetching water charges');
     }
 };
 
-exports.updateAccommodationCharge = async (req, res) => {
-    const { type } = req.params;
-    const { water_charge, electric_charge } = req.body;
-    const waterFile = req.files && req.files.waterBill ? req.files.waterBill[0].filename : null;
-    const electricFile = req.files && req.files.electricBill ? req.files.electricBill[0].filename : null;
+exports.updateWaterCharge = async (req, res) => {
+    const { address } = req.params;
+    const { water_charge } = req.body;
+    const billFile = req.files && req.files.bill ? req.files.bill[0].filename : null;
 
-    const allowedAccom = await getAccommodationTypes();
-    if (!allowedAccom.includes(type)) {
-        return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${allowedAccom.join(', ')}.` });
+    const allowed = await getWaterAddresses();
+    if (!allowed.includes(address)) {
+        return res.status(400).json({ msg: 'Invalid water address.' });
     }
 
     const water = parseFloat(water_charge) || 0;
-    const electric = parseFloat(electric_charge) || 0;
 
     try {
         await pool.query('BEGIN');
 
-        let oldWater = null;
-        let oldElectric = null;
-        if (waterFile || electricFile) {
+        let oldBill = null;
+        if (billFile) {
             const { rows: existing } = await pool.query(
-                'SELECT water_bill_image, electric_bill_image FROM AccommodationCharges WHERE accommodation_type=$1',
-                [type]
+                'SELECT bill_image FROM WaterAddresses WHERE address_name=$1',
+                [address]
             );
             if (existing.length) {
-                oldWater = existing[0].water_bill_image;
-                oldElectric = existing[0].electric_bill_image;
+                oldBill = existing[0].bill_image;
             }
         }
 
         const { rows } = await pool.query(
-            `INSERT INTO AccommodationCharges (
-                accommodation_type, water_charge, electric_charge, water_bill_image, electric_bill_image, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP)
-            ON CONFLICT (accommodation_type)
+            `INSERT INTO WaterAddresses (
+                address_name, water_charge, bill_image, updated_at
+            ) VALUES ($1,$2,$3,CURRENT_TIMESTAMP)
+            ON CONFLICT (address_name)
             DO UPDATE SET
                 water_charge=EXCLUDED.water_charge,
-                electric_charge=EXCLUDED.electric_charge,
-                water_bill_image=COALESCE(EXCLUDED.water_bill_image, AccommodationCharges.water_bill_image),
-                electric_bill_image=COALESCE(EXCLUDED.electric_bill_image, AccommodationCharges.electric_bill_image),
+                bill_image=COALESCE(EXCLUDED.bill_image, WaterAddresses.bill_image),
                 updated_at=CURRENT_TIMESTAMP
             RETURNING *`,
-            [type, water, electric, waterFile, electricFile]
+            [address, water, billFile]
         );
 
         await pool.query('COMMIT');
 
-        if (waterFile && oldWater && oldWater !== rows[0].water_bill_image) {
-            const filePath = path.join(__dirname, '../../uploads', oldWater);
-            try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting old bill file:', err.message); }
-        }
-        if (electricFile && oldElectric && oldElectric !== rows[0].electric_bill_image) {
-            const filePath = path.join(__dirname, '../../uploads', oldElectric);
+        if (billFile && oldBill && oldBill !== rows[0].bill_image) {
+            const filePath = path.join(__dirname, '../../uploads', oldBill);
             try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting old bill file:', err.message); }
         }
 
         res.json(rows[0]);
     } catch (err) {
         await pool.query('ROLLBACK');
-        console.error('Error in updateAccommodationCharge:', err.message);
-        res.status(500).send('Server error while updating accommodation charge');
+        console.error('Error in updateWaterCharge:', err.message);
+        res.status(500).send('Server error while updating water charge');
+    }
+};
+
+exports.getElectricCharges = async (req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT *, (current_unit - last_unit)*5 AS total_charge FROM ElectricAddresses ORDER BY address_name');
+        res.json(rows);
+    } catch (err) {
+        console.error('Error in getElectricCharges:', err.message);
+        res.status(500).send('Server error while fetching electric charges');
+    }
+};
+
+exports.updateElectricCharge = async (req, res) => {
+    const { address } = req.params;
+    const { current_unit } = req.body;
+    const lastFile = req.files && req.files.lastBill ? req.files.lastBill[0].filename : null;
+    const currentFile = req.files && req.files.currentBill ? req.files.currentBill[0].filename : null;
+
+    const allowed = await getElectricAddresses();
+    if (!allowed.includes(address)) {
+        return res.status(400).json({ msg: 'Invalid electric address.' });
+    }
+
+    const current = parseFloat(current_unit) || 0;
+
+    try {
+        await pool.query('BEGIN');
+
+        let lastUnit = 0;
+        let oldLast = null;
+        let oldCurrent = null;
+        const { rows: existing } = await pool.query('SELECT current_unit, bill_current_image, bill_last_image FROM ElectricAddresses WHERE address_name=$1', [address]);
+        if (existing.length) {
+            lastUnit = existing[0].current_unit || 0;
+            oldLast = existing[0].bill_last_image;
+            oldCurrent = existing[0].bill_current_image;
+        }
+
+        const { rows } = await pool.query(
+            `INSERT INTO ElectricAddresses (
+                address_name, last_unit, current_unit, bill_last_image, bill_current_image, updated_at
+            ) VALUES ($1,$2,$3,$4,$5,CURRENT_TIMESTAMP)
+            ON CONFLICT (address_name)
+            DO UPDATE SET
+                last_unit=$2,
+                current_unit=$3,
+                bill_last_image=COALESCE($4, ElectricAddresses.bill_last_image),
+                bill_current_image=COALESCE($5, ElectricAddresses.bill_current_image),
+                updated_at=CURRENT_TIMESTAMP
+            RETURNING *`,
+            [address, lastUnit, current, lastFile, currentFile]
+        );
+
+        await pool.query('COMMIT');
+
+        if (lastFile && oldLast && oldLast !== rows[0].bill_last_image) {
+            const filePath = path.join(__dirname, '../../uploads', oldLast);
+            try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting old bill file:', err.message); }
+        }
+        if (currentFile && oldCurrent && oldCurrent !== rows[0].bill_current_image) {
+            const filePath = path.join(__dirname, '../../uploads', oldCurrent);
+            try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting old bill file:', err.message); }
+        }
+
+        res.json(rows[0]);
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        console.error('Error in updateElectricCharge:', err.message);
+        res.status(500).send('Server error while updating electric charge');
     }
 };

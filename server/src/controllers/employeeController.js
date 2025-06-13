@@ -1,5 +1,5 @@
 const pool = require('../config/db'); // Your PostgreSQL connection pool
-const { getAccommodationTypes } = require('../utils/accommodation');
+const { getWaterAddresses, getElectricAddresses } = require('../utils/accommodation');
 
 const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนักงาน", "ช่าง"];
 
@@ -54,7 +54,8 @@ exports.createEmployee = async (req, res) => {
         payment_cycle,
         employee_role,
         status,
-        accommodation_details // Now one of three choices or null/empty
+        water_address,
+        electric_address
     } = req.body;
 
     // Validation for required fields
@@ -67,11 +68,17 @@ exports.createEmployee = async (req, res) => {
         return res.status(400).json({ msg: 'Daily wage must be a valid non-negative number.' });
     }
 
-    // Validate accommodation_details if provided
-    if (accommodation_details && accommodation_details !== '') {
-        const allowedAccom = await getAccommodationTypes();
-        if (!allowedAccom.includes(accommodation_details)) {
-            return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${allowedAccom.join(', ')}.` });
+    if (water_address && water_address !== '') {
+        const allowedWater = await getWaterAddresses();
+        if (!allowedWater.includes(water_address)) {
+            return res.status(400).json({ msg: `Invalid water address.` });
+        }
+    }
+
+    if (electric_address && electric_address !== '') {
+        const allowedElectric = await getElectricAddresses();
+        if (!allowedElectric.includes(electric_address)) {
+            return res.status(400).json({ msg: `Invalid electric address.` });
         }
     }
 
@@ -85,10 +92,10 @@ exports.createEmployee = async (req, res) => {
             `INSERT INTO Employees (
                 first_name, last_name, nickname,
                 daily_wage, nationality, payment_cycle,
-                employee_role, status, accommodation_details,
+                employee_role, status, water_address, electric_address,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, accommodation_details`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, water_address, electric_address`,
             [
                 first_name,
                 last_name,
@@ -98,7 +105,8 @@ exports.createEmployee = async (req, res) => {
                 payment_cycle,
                 employee_role,
                 status,
-                (accommodation_details && accommodation_details !== '') ? accommodation_details : null
+                water_address || null,
+                electric_address || null
             ]
         );
         res.status(201).json(newEmployee.rows[0]);
@@ -121,7 +129,7 @@ exports.updateEmployee = async (req, res) => {
     const allowedUpdates = [
         'first_name', 'last_name', 'nickname',
         'daily_wage', 'nationality', 'payment_cycle',
-        'employee_role', 'status', 'accommodation_details'
+        'employee_role', 'status', 'water_address', 'electric_address'
     ];
 
     const fieldsToUpdate = {};
@@ -133,14 +141,25 @@ exports.updateEmployee = async (req, res) => {
                     return res.status(400).json({ msg: 'Daily wage must be a valid non-negative number.' });
                 }
                 fieldsToUpdate[key] = wage;
-            } else if (key === 'accommodation_details') {
-                const accValue = receivedFields[key];
-                if (accValue && accValue !== '') {
-                    const allowedAccom = await getAccommodationTypes();
-                    if (!allowedAccom.includes(accValue)) {
-                        return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${allowedAccom.join(', ')}.` });
+            } else if (key === 'water_address') {
+                const w = receivedFields[key];
+                if (w && w !== '') {
+                    const allowedWater = await getWaterAddresses();
+                    if (!allowedWater.includes(w)) {
+                        return res.status(400).json({ msg: 'Invalid water address.' });
                     }
-                    fieldsToUpdate[key] = accValue;
+                    fieldsToUpdate[key] = w;
+                } else {
+                    fieldsToUpdate[key] = null;
+                }
+            } else if (key === 'electric_address') {
+                const e = receivedFields[key];
+                if (e && e !== '') {
+                    const allowedElectric = await getElectricAddresses();
+                    if (!allowedElectric.includes(e)) {
+                        return res.status(400).json({ msg: 'Invalid electric address.' });
+                    }
+                    fieldsToUpdate[key] = e;
                 } else {
                     fieldsToUpdate[key] = null;
                 }
@@ -180,7 +199,7 @@ exports.updateEmployee = async (req, res) => {
     }
     values.push(id);
 
-    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, accommodation_details`;
+    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, nationality, payment_cycle, employee_role, status, created_at, updated_at, water_address, electric_address`;
 
     try {
         const updatedEmployee = await pool.query(queryText, values);

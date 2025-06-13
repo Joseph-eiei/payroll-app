@@ -4,7 +4,8 @@ import axios from 'axios';
 function DeductionManagementPage() {
   const [types, setTypes] = useState([]);
   const [typeForm, setTypeForm] = useState({ id: null, name: '', rate: '', is_active: true });
-  const [charges, setCharges] = useState([]);
+  const [waterCharges, setWaterCharges] = useState([]);
+  const [electricCharges, setElectricCharges] = useState([]);
   const [error, setError] = useState('');
 
   const fetchTypes = async () => {
@@ -19,10 +20,10 @@ function DeductionManagementPage() {
 
   const fetchCharges = async () => {
     try {
-      const { data } = await axios.get('/api/deductions/accommodation');
-      setCharges(
-        data.map((c) => ({ ...c, waterBillFile: null, electricBillFile: null }))
-      );
+      const waterRes = await axios.get('/api/deductions/water');
+      setWaterCharges(waterRes.data.map((c) => ({ ...c, billFile: null })));
+      const eleRes = await axios.get('/api/deductions/electric');
+      setElectricCharges(eleRes.data.map((c) => ({ ...c, lastBillFile: null, currentBillFile: null })));
     } catch (err) {
       console.error(err);
       setError('โหลดค่าน้ำค่าไฟไม่สำเร็จ');
@@ -78,39 +79,70 @@ function DeductionManagementPage() {
     }
   };
 
-  const handleChargeChange = (idx, field, value) => {
-    setCharges((prev) => {
-      const arr = [...prev];
-      arr[idx] = { ...arr[idx], [field]: value };
-      return arr;
-    });
+  const handleChargeChange = (type, idx, field, value) => {
+    if (type === 'water') {
+      setWaterCharges((prev) => {
+        const arr = [...prev];
+        arr[idx] = { ...arr[idx], [field]: value };
+        return arr;
+      });
+    } else {
+      setElectricCharges((prev) => {
+        const arr = [...prev];
+        arr[idx] = { ...arr[idx], [field]: value };
+        return arr;
+      });
+    }
   };
 
-  const handleFileChange = (idx, field, file) => {
-    setCharges((prev) => {
-      const arr = [...prev];
-      arr[idx] = { ...arr[idx], [field]: file };
-      return arr;
-    });
+  const handleFileChange = (type, idx, field, file) => {
+    if (type === 'water') {
+      setWaterCharges((prev) => {
+        const arr = [...prev];
+        arr[idx] = { ...arr[idx], [field]: file };
+        return arr;
+      });
+    } else {
+      setElectricCharges((prev) => {
+        const arr = [...prev];
+        arr[idx] = { ...arr[idx], [field]: file };
+        return arr;
+      });
+    }
   };
 
-  const saveCharge = async (c) => {
+  const saveWater = async (c) => {
     try {
       const formData = new FormData();
       formData.append('water_charge', c.water_charge);
-      formData.append('electric_charge', c.electric_charge);
-      if (c.waterBillFile) formData.append('waterBill', c.waterBillFile);
-      if (c.electricBillFile) formData.append('electricBill', c.electricBillFile);
+      if (c.billFile) formData.append('bill', c.billFile);
 
-      await axios.put(
-        `/api/deductions/accommodation/${encodeURIComponent(c.accommodation_type)}`,
+      await axios.put(`/api/deductions/water/${encodeURIComponent(c.address_name)}`,
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       fetchCharges();
     } catch (err) {
       console.error(err);
-      setError('บันทึกค่าน้ำค่าไฟไม่สำเร็จ');
+      setError('บันทึกค่าน้ำไม่สำเร็จ');
+    }
+  };
+
+  const saveElectric = async (c) => {
+    try {
+      const formData = new FormData();
+      formData.append('current_unit', c.current_unit);
+      if (c.lastBillFile) formData.append('lastBill', c.lastBillFile);
+      if (c.currentBillFile) formData.append('currentBill', c.currentBillFile);
+
+      await axios.put(`/api/deductions/electric/${encodeURIComponent(c.address_name)}`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      fetchCharges();
+    } catch (err) {
+      console.error(err);
+      setError('บันทึกค่าไฟไม่สำเร็จ');
     }
   };
 
@@ -172,60 +204,97 @@ function DeductionManagementPage() {
         </tbody>
       </table>
 
-      <h2 className="text-2xl font-semibold mb-4">ค่าน้ำค่าไฟที่พัก</h2>
-      <table className="min-w-full bg-white shadow">
+      <h2 className="text-2xl font-semibold mb-4">ค่าน้ำ</h2>
+      <table className="min-w-full bg-white shadow mb-8">
         <thead className="bg-gray-100">
           <tr>
-            <th className="px-4 py-2 text-left">ที่พัก</th>
+            <th className="px-4 py-2 text-left">ที่อยู่</th>
             <th className="px-4 py-2 text-left">ค่าน้ำ</th>
-            <th className="px-4 py-2 text-left">ค่าไฟ</th>
             <th className="px-4 py-2 text-left">บิลน้ำ</th>
-            <th className="px-4 py-2 text-left">บิลไฟ</th>
             <th className="px-4 py-2" />
           </tr>
         </thead>
         <tbody>
-          {charges.map((c, idx) => (
-            <tr key={c.accommodation_type} className="border-t">
-              <td className="px-4 py-2">{c.accommodation_type}</td>
+          {waterCharges.map((c, idx) => (
+            <tr key={c.address_name} className="border-t">
+              <td className="px-4 py-2">{c.address_name}</td>
               <td className="px-4 py-2">
                 <input
                   type="number"
                   value={c.water_charge}
-                  onChange={(e) => handleChargeChange(idx, 'water_charge', e.target.value)}
+                  onChange={(e) => handleChargeChange('water', idx, 'water_charge', e.target.value)}
                   className="border p-1 w-24"
                 />
               </td>
+              <td className="px-4 py-2">
+                {c.bill_image && (
+                  <a href={`/uploads/${c.bill_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                )}
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange('water', idx, 'billFile', e.target.files[0])}
+                  className="mt-1"
+                />
+              </td>
+              <td className="px-4 py-2">
+                <button onClick={() => saveWater(c)} className="bg-sky-600 text-white px-3 py-1 rounded">
+                  บันทึก
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2 className="text-2xl font-semibold mb-4">ค่าไฟ</h2>
+      <table className="min-w-full bg-white shadow">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-4 py-2 text-left">ที่อยู่</th>
+            <th className="px-4 py-2 text-left">หน่วยก่อนหน้า</th>
+            <th className="px-4 py-2 text-left">หน่วยปัจจุบัน</th>
+            <th className="px-4 py-2 text-left">บิลก่อน</th>
+            <th className="px-4 py-2 text-left">บิลปัจจุบัน</th>
+            <th className="px-4 py-2 text-left">ยอดค่าไฟ</th>
+            <th className="px-4 py-2" />
+          </tr>
+        </thead>
+        <tbody>
+          {electricCharges.map((c, idx) => (
+            <tr key={c.address_name} className="border-t">
+              <td className="px-4 py-2">{c.address_name}</td>
+              <td className="px-4 py-2">{c.last_unit}</td>
               <td className="px-4 py-2">
                 <input
                   type="number"
-                  value={c.electric_charge}
-                  onChange={(e) => handleChargeChange(idx, 'electric_charge', e.target.value)}
+                  value={c.current_unit}
+                  onChange={(e) => handleChargeChange('electric', idx, 'current_unit', e.target.value)}
                   className="border p-1 w-24"
                 />
               </td>
               <td className="px-4 py-2">
-                {c.water_bill_image && (
-                  <a href={`/uploads/${c.water_bill_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                {c.bill_last_image && (
+                  <a href={`/uploads/${c.bill_last_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
                 )}
                 <input
                   type="file"
-                  onChange={(e) => handleFileChange(idx, 'waterBillFile', e.target.files[0])}
+                  onChange={(e) => handleFileChange('electric', idx, 'lastBillFile', e.target.files[0])}
                   className="mt-1"
                 />
               </td>
               <td className="px-4 py-2">
-                {c.electric_bill_image && (
-                  <a href={`/uploads/${c.electric_bill_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
+                {c.bill_current_image && (
+                  <a href={`/uploads/${c.bill_current_image}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 mr-2">ดูรูป</a>
                 )}
                 <input
                   type="file"
-                  onChange={(e) => handleFileChange(idx, 'electricBillFile', e.target.files[0])}
+                  onChange={(e) => handleFileChange('electric', idx, 'currentBillFile', e.target.files[0])}
                   className="mt-1"
                 />
               </td>
+              <td className="px-4 py-2">{((c.current_unit - c.last_unit) * 5).toFixed(2)}</td>
               <td className="px-4 py-2">
-                <button onClick={() => saveCharge(c)} className="bg-sky-600 text-white px-3 py-1 rounded">
+                <button onClick={() => saveElectric(c)} className="bg-sky-600 text-white px-3 py-1 rounded">
                   บันทึก
                 </button>
               </td>

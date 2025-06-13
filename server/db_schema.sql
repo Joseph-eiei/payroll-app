@@ -11,10 +11,8 @@ CREATE TABLE employees (
     status VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    accommodation_details TEXT,
-    CONSTRAINT IF NOT EXISTS employees_accommodation_details_fkey
-        FOREIGN KEY (accommodation_details)
-        REFERENCES AccommodationCharges(accommodation_type);
+    water_address TEXT,
+    electric_address TEXT
 
 );
 
@@ -69,20 +67,32 @@ CREATE TABLE IF NOT EXISTS DeductionTypes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Monthly utility charges for employee accommodations
-CREATE TABLE IF NOT EXISTS AccommodationCharges (
-    accommodation_type TEXT PRIMARY KEY,
+-- Water charge addresses
+CREATE TABLE IF NOT EXISTS WaterAddresses (
+    address_name TEXT PRIMARY KEY,
     water_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
-    electric_charge NUMERIC(10,2) NOT NULL DEFAULT 0,
-    water_bill_image TEXT,
-    electric_bill_image TEXT,
+    bill_image TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Link employee accommodation details to the charges table
+-- Electric charge addresses
+CREATE TABLE IF NOT EXISTS ElectricAddresses (
+    address_name TEXT PRIMARY KEY,
+    last_unit NUMERIC(10,2) NOT NULL DEFAULT 0,
+    current_unit NUMERIC(10,2) NOT NULL DEFAULT 0,
+    bill_last_image TEXT,
+    bill_current_image TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Link employee water/electric addresses to respective tables
 ALTER TABLE IF EXISTS Employees
-    ADD CONSTRAINT IF NOT EXISTS employees_accommodation_details_fkey
-    FOREIGN KEY (accommodation_details)
-    REFERENCES AccommodationCharges(accommodation_type);
+    ADD CONSTRAINT IF NOT EXISTS employees_water_address_fkey
+        FOREIGN KEY (water_address)
+        REFERENCES WaterAddresses(address_name);
+ALTER TABLE IF EXISTS Employees
+    ADD CONSTRAINT IF NOT EXISTS employees_electric_address_fkey
+        FOREIGN KEY (electric_address)
+        REFERENCES ElectricAddresses(address_name);
 
 -- Old verified records are automatically purged on the 10th day of each month by the server.
