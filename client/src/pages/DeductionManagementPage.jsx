@@ -8,7 +8,6 @@ function DeductionManagementPage() {
   const [waterCharges, setWaterCharges] = useState([]);
   const [electricCharges, setElectricCharges] = useState([]);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const fetchTypes = async () => {
     try {
@@ -27,6 +26,7 @@ function DeductionManagementPage() {
         waterRes.data.map((c) => ({
           ...c,
           billFile: null,
+          water_charge: '',
           bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
         }))
       );
@@ -53,13 +53,6 @@ function DeductionManagementPage() {
     fetchCharges();
   }, []);
 
-  useEffect(() => {
-    if (success) {
-      const t = setTimeout(() => setSuccess(''), 3000);
-      return () => clearTimeout(t);
-    }
-    return undefined;
-  }, [success]);
 
   const handleTypeFormChange = (e) => {
     const { name, value } = e.target;
@@ -209,13 +202,11 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-      setSuccess('บันทึกค่าน้ำสำเร็จ');
-      setError('');
       fetchCharges();
+      alert('บันทึกค่าน้ำสำเร็จ');
     } catch (err) {
       console.error(err);
-      setError('บันทึกค่าน้ำไม่สำเร็จ');
-      setSuccess('');
+      alert('บันทึกค่าน้ำไม่สำเร็จ');
     }
   };
 
@@ -231,13 +222,11 @@ function DeductionManagementPage() {
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
-      setSuccess('บันทึกค่าไฟสำเร็จ');
-      setError('');
       fetchCharges();
+      alert('บันทึกค่าไฟสำเร็จ');
     } catch (err) {
       console.error(err);
-      setError('บันทึกค่าไฟไม่สำเร็จ');
-      setSuccess('');
+      alert('บันทึกค่าไฟไม่สำเร็จ');
     }
   };
 
@@ -460,7 +449,6 @@ function DeductionManagementPage() {
         </tbody>
       </table>
 
-      {success && <div className="text-green-600 mt-4">{success}</div>}
       {error && <div className="text-red-600 mt-4">{error}</div>}
     </div>
   );
