@@ -115,7 +115,7 @@ function DeductionManagementPage() {
   };
 
   return (
-    <div className="min-h-screen p-6 font-sans">
+    <div className="min-h-screen p-6 font-sans text-black">
       <h2 className="text-2xl font-semibold mb-4">จัดการประเภทการหักเงิน</h2>
       <form onSubmit={saveType} className="flex flex-wrap gap-2 mb-4 items-end">
         <input
