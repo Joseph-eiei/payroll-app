@@ -1,6 +1,6 @@
 const pool = require('../config/db'); // Your PostgreSQL connection pool
+const { getAccommodationTypes } = require('../utils/accommodation');
 
-const ALLOWED_ACCOMMODATION = ["โกดัง", "แคมป์ก่อสร้าง", "โรงงาน"];
 const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนักงาน", "ช่าง"];
 
 // @desc    Get all employees
@@ -68,8 +68,11 @@ exports.createEmployee = async (req, res) => {
     }
 
     // Validate accommodation_details if provided
-    if (accommodation_details && accommodation_details !== '' && !ALLOWED_ACCOMMODATION.includes(accommodation_details)) {
-        return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${ALLOWED_ACCOMMODATION.join(', ')}.` });
+    if (accommodation_details && accommodation_details !== '') {
+        const allowedAccom = await getAccommodationTypes();
+        if (!allowedAccom.includes(accommodation_details)) {
+            return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${allowedAccom.join(', ')}.` });
+        }
     }
 
     // Validate employee_role
@@ -132,10 +135,15 @@ exports.updateEmployee = async (req, res) => {
                 fieldsToUpdate[key] = wage;
             } else if (key === 'accommodation_details') {
                 const accValue = receivedFields[key];
-                if (accValue && accValue !== '' && !ALLOWED_ACCOMMODATION.includes(accValue)) {
-                    return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${ALLOWED_ACCOMMODATION.join(', ')}.` });
+                if (accValue && accValue !== '') {
+                    const allowedAccom = await getAccommodationTypes();
+                    if (!allowedAccom.includes(accValue)) {
+                        return res.status(400).json({ msg: `Invalid accommodation type. Allowed values are: ${allowedAccom.join(', ')}.` });
+                    }
+                    fieldsToUpdate[key] = accValue;
+                } else {
+                    fieldsToUpdate[key] = null;
                 }
-                fieldsToUpdate[key] = (accValue && accValue !== '') ? accValue : null;
             } else if (key === 'employee_role') {
                 const roleValue = receivedFields[key];
                 if (!ALLOWED_EMPLOYEE_ROLES.includes(roleValue)) {
