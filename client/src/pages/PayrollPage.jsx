@@ -7,6 +7,7 @@ function PayrollPage() {
   const [cycle, setCycle] = useState('รายเดือน');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [halfPeriod, setHalfPeriod] = useState('1-15');
+  const [deductionTypes, setDeductionTypes] = useState([]);
 
 
   const fetchPayroll = async (m) => {
@@ -39,6 +40,18 @@ function PayrollPage() {
       setError('ไม่สามารถโหลดข้อมูลเงินเดือน');
     }
   };
+
+  useEffect(() => {
+    const loadTypes = async () => {
+      try {
+        const { data } = await axios.get('/api/deductions/types');
+        setDeductionTypes(data.filter(t => t.is_active));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadTypes();
+  }, []);
 
   useEffect(() => {
     if (cycle === 'รายเดือน') {
@@ -81,7 +94,12 @@ function PayrollPage() {
           <th className="px-2 py-2">รวมรายได้</th>
           {showDeduction && <th className="px-2 py-2">ค่าน้ำ</th>}
           {showDeduction && <th className="px-2 py-2">ค่าไฟ</th>}
-          {showDeduction && <th className="px-2 py-2">หักอื่นๆ</th>}
+          {showDeduction &&
+            deductionTypes.map((d) => (
+              <th key={d.id} className="px-2 py-2">
+                {`${d.name} (${parseFloat(d.rate)}%)`}
+              </th>
+            ))}
           {showDeduction && <th className="px-2 py-2">รวมยอดหัก</th>}
           <th className="px-2 py-2">รับสุทธิ</th>
           <th className="px-2 py-2" />
@@ -107,9 +125,15 @@ function PayrollPage() {
             {showDeduction && (
               <td className="px-2 py-1 text-right">{p.electric_deduction.toFixed(2)}</td>
             )}
-            {showDeduction && (
-              <td className="px-2 py-1 text-right">{p.other_deductions.toFixed(2)}</td>
-            )}
+            {showDeduction &&
+              deductionTypes.map((d) => {
+                const detail = p.deduction_details.find((dd) => dd.name === d.name);
+                return (
+                  <td key={d.id} className="px-2 py-1 text-right">
+                    {detail ? detail.amount.toFixed(2) : '0.00'}
+                  </td>
+                );
+              })}
             {showDeduction && (
               <td className="px-2 py-1 text-right">{p.deductions_total.toFixed(2)}</td>
             )}
