@@ -8,6 +8,8 @@ function PayrollPage() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [halfPeriod, setHalfPeriod] = useState('1-15');
   const [deductionTypes, setDeductionTypes] = useState([]);
+  const [advanceInputs, setAdvanceInputs] = useState({});
+  const [savingInputs, setSavingInputs] = useState({});
 
 
   const fetchPayroll = async (m) => {
@@ -63,12 +65,26 @@ function PayrollPage() {
 
 
   const handleConfirm = async (id) => {
+    const adv = advanceInputs[id] || {};
+    const advArr = Object.keys(adv).map((key) => ({
+      id: parseInt(key, 10),
+      amount: adv[key].amount || 0,
+      remark: adv[key].remark || '',
+    }));
+    const sav = savingInputs[id] || {};
+    const payload = {
+      employeeId: id,
+      month,
+      advanceDeductions: advArr,
+      savingsWithdraw: sav.withdraw || false,
+      savingsRemark: sav.remark || '',
+    };
     try {
       if (cycle === 'รายเดือน') {
-        await axios.post('/api/payroll/monthly/record', { employeeId: id, month });
+        await axios.post('/api/payroll/monthly/record', payload);
       } else {
         const p = halfPeriod === '16-สิ้นเดือน' ? 'second' : 'first';
-        await axios.post('/api/payroll/semi-monthly/record', { employeeId: id, month, period: p });
+        await axios.post('/api/payroll/semi-monthly/record', { ...payload, period: p });
       }
       alert('บันทึกสำเร็จ');
     } catch (err) {
@@ -100,6 +116,8 @@ function PayrollPage() {
                 {`${d.name} (${parseFloat(d.rate)}%)`}
               </th>
             ))}
+          {showDeduction && <th className="px-2 py-2">เงินเบิก</th>}
+          {showDeduction && <th className="px-2 py-2">เงินเก็บสะสม</th>}
           {showDeduction && <th className="px-2 py-2">รวมยอดหัก</th>}
           <th className="px-2 py-2">รับสุทธิ</th>
           <th className="px-2 py-2" />
@@ -134,6 +152,98 @@ function PayrollPage() {
                   </td>
                 );
               })}
+            {showDeduction && (
+              <td className="px-2 py-1">
+                {p.advances && p.advances.length > 0 ? (
+                  p.advances.map((a) => (
+                    <div key={a.id} className="mb-1">
+                      <div className="text-xs">{a.name}</div>
+                      <input
+                        type="number"
+                        className="border p-1 w-20"
+                        value={advanceInputs[p.employee_id]?.[a.id]?.amount || ''}
+                        onChange={(e) =>
+                          setAdvanceInputs((prev) => ({
+                            ...prev,
+                            [p.employee_id]: {
+                              ...(prev[p.employee_id] || {}),
+                              [a.id]: {
+                                ...(prev[p.employee_id]?.[a.id] || {}),
+                                amount: e.target.value,
+                              },
+                            },
+                          }))
+                        }
+                      />
+                      <input
+                        type="text"
+                        className="border p-1 w-20 mt-1"
+                        placeholder="หมายเหตุ"
+                        value={advanceInputs[p.employee_id]?.[a.id]?.remark || ''}
+                        onChange={(e) =>
+                          setAdvanceInputs((prev) => ({
+                            ...prev,
+                            [p.employee_id]: {
+                              ...(prev[p.employee_id] || {}),
+                              [a.id]: {
+                                ...(prev[p.employee_id]?.[a.id] || {}),
+                                remark: e.target.value,
+                              },
+                            },
+                          }))
+                        }
+                      />
+                      <div className="text-xs">
+                        คงเหลือ {(
+                          a.total_amount -
+                          (parseFloat(advanceInputs[p.employee_id]?.[a.id]?.amount) || 0)
+                        ).toFixed(2)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  '-'
+                )}
+              </td>
+            )}
+            {showDeduction && (
+              <td className="px-2 py-1">
+                <div className="mb-1 text-xs">
+                  ฝาก {p.savings_monthly_amount.toFixed(2)} (ยอดปัจจุบัน {p.savings_balance.toFixed(2)})
+                </div>
+                <label className="text-xs mr-2">
+                  <input
+                    type="checkbox"
+                    checked={savingInputs[p.employee_id]?.withdraw || false}
+                    onChange={(e) =>
+                      setSavingInputs((prev) => ({
+                        ...prev,
+                        [p.employee_id]: {
+                          ...(prev[p.employee_id] || {}),
+                          withdraw: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  ถอน
+                </label>
+                <input
+                  type="text"
+                  className="border p-1 w-20"
+                  placeholder="หมายเหตุ"
+                  value={savingInputs[p.employee_id]?.remark || ''}
+                  onChange={(e) =>
+                    setSavingInputs((prev) => ({
+                      ...prev,
+                      [p.employee_id]: {
+                        ...(prev[p.employee_id] || {}),
+                        remark: e.target.value,
+                      },
+                    }))
+                  }
+                />
+              </td>
+            )}
             {showDeduction && (
               <td className="px-2 py-1 text-right">{p.deductions_total.toFixed(2)}</td>
             )}
