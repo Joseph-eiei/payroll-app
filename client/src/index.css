@@ -66,3 +66,32 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Primary color overrides */
+:root {
+  --color-primary-50: #e7f7e7;
+  --color-primary-100: #d2efd2;
+  --color-primary-500: #007a00;
+  --color-primary-600: #006a00;
+  --color-primary-700: #005b00;
+  --color-primary-800: #004c00;
+}
+
+.bg-sky-50 { background-color: var(--color-primary-50) !important; }
+.bg-sky-100 { background-color: var(--color-primary-100) !important; }
+.bg-sky-500 { background-color: var(--color-primary-500) !important; }
+.bg-sky-600 { background-color: var(--color-primary-600) !important; }
+.bg-sky-700 { background-color: var(--color-primary-700) !important; }
+.bg-sky-800 { background-color: var(--color-primary-800) !important; }
+
+.text-sky-50 { color: var(--color-primary-50) !important; }
+.text-sky-100 { color: var(--color-primary-100) !important; }
+.text-sky-500 { color: var(--color-primary-500) !important; }
+.text-sky-600 { color: var(--color-primary-600) !important; }
+.text-sky-700 { color: var(--color-primary-700) !important; }
+.text-sky-800 { color: var(--color-primary-800) !important; }
+
+.border-sky-500 { border-color: var(--color-primary-500) !important; }
+.border-sky-600 { border-color: var(--color-primary-600) !important; }
+.border-sky-700 { border-color: var(--color-primary-700) !important; }
+.ring-sky-500 { --tw-ring-color: var(--color-primary-500) !important; }

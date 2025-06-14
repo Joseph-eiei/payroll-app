@@ -34,7 +34,7 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700 p-4 font-sans">
+        <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-green-900 to-green-700 p-4 font-sans">
             <div className="bg-white p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md">
                 <h2 className="text-3xl font-bold text-center text-slate-800 mb-8">ผู้ดูแลระบบ</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -68,14 +68,14 @@ function AdminLoginPage({ setIsAdminLoggedIn, setAdminUser }) {
                     <div>
                         <button
                             type="submit"
-                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition duration-150 ease-in-out"
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#007a00] hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700 transition duration-150 ease-in-out"
                         >
                             เข้าสู่ระบบ
                         </button>
                     </div>
                 </form>
                  <p className="mt-6 text-center text-sm">
-                    <Link to="/" className="font-medium text-sky-600 hover:text-sky-500">
+                    <Link to="/" className="font-medium text-[#007a00] hover:text-green-700">
                         &larr; กลับไปหน้าลงเวลา
                     </Link>
                 </p>

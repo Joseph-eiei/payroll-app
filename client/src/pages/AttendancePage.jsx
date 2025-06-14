@@ -120,10 +120,10 @@ function AttendancePage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-sky-100 to-blue-200 py-8 px-4 sm:px-6 lg:px-8 font-sans  flex justify-center">
+    <div className="min-h-screen w-full bg-gradient-to-br from-green-50 to-green-100 py-8 px-4 sm:px-6 lg:px-8 font-sans  flex justify-center">
       <div className="w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-sky-700 text-center sm:text-left">ลงชื่อเข้า-ออกงาน</h1>
+          <h1 className="text-3xl font-bold text-[#007a00] text-center sm:text-left">ลงชื่อเข้า-ออกงาน</h1>
           <Link
             to="/admin/login"
             className="bg-green-600 hover:bg-green-700 text-white! font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out w-full sm:w-auto text-center"
@@ -290,7 +290,7 @@ function AttendancePage() {
             </button>
             <button
               type="submit"
-              className="w-full sm:w-auto bg-sky-600! hover:bg-sky-700! text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
+            className="w-full sm:w-auto bg-[#007a00] hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out"
             >
               ยืนยันและส่งข้อมูล
             </button>
