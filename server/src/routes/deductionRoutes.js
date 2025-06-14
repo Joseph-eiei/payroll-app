@@ -27,10 +27,7 @@ router.get('/electric/history/:address', authMiddleware, deductionController.get
 router.put(
   '/electric/:address',
   authMiddleware,
-  upload.fields([
-    { name: 'lastBill', maxCount: 1 },
-    { name: 'currentBill', maxCount: 1 },
-  ]),
+  upload.fields([{ name: 'currentBill', maxCount: 1 }]),
   deductionController.updateElectricCharge
 );
 router.delete('/electric/:address', authMiddleware, deductionController.deleteElectricAddress);

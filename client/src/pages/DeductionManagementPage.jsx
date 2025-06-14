@@ -27,6 +27,7 @@ function DeductionManagementPage() {
       const waterData = waterRes.data.map((c) => ({
         ...c,
         billFile: null,
+        billPreview: null,
         water_charge: '',
         bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
       }));
@@ -37,8 +38,8 @@ function DeductionManagementPage() {
         last_unit: c.current_unit,
         current_unit: '',
         bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
-        lastBillFile: null,
         currentBillFile: null,
+        currentBillPreview: null,
       }));
 
       setWaterCharges(waterData);
@@ -178,16 +179,20 @@ function DeductionManagementPage() {
   };
 
   const handleFileChange = (type, idx, field, file) => {
+    const previewField = field === 'billFile' ? 'billPreview' : 'currentBillPreview';
+    const url = file ? URL.createObjectURL(file) : null;
     if (type === 'water') {
       setWaterCharges((prev) => {
         const arr = [...prev];
-        arr[idx] = { ...arr[idx], [field]: file };
+        if (arr[idx][previewField]) URL.revokeObjectURL(arr[idx][previewField]);
+        arr[idx] = { ...arr[idx], [field]: file, [previewField]: url };
         return arr;
       });
     } else {
       setElectricCharges((prev) => {
         const arr = [...prev];
-        arr[idx] = { ...arr[idx], [field]: file };
+        if (arr[idx][previewField]) URL.revokeObjectURL(arr[idx][previewField]);
+        arr[idx] = { ...arr[idx], [field]: file, [previewField]: url };
         return arr;
       });
     }
@@ -202,6 +207,7 @@ function DeductionManagementPage() {
         bill_image: null,
         bill_month: new Date().toISOString().slice(0,7),
         billFile: null,
+        billPreview: null,
         isNew: true,
       },
     ]);
@@ -217,8 +223,8 @@ function DeductionManagementPage() {
         bill_last_image: null,
         bill_current_image: null,
         bill_month: new Date().toISOString().slice(0,7),
-        lastBillFile: null,
         currentBillFile: null,
+        currentBillPreview: null,
         isNew: true,
       },
     ]);
@@ -267,7 +273,7 @@ function DeductionManagementPage() {
       );
       const { waterData } = await fetchCharges();
       setWaterCharges(waterData.map((w) =>
-        w.address_name === c.address_name ? { ...w, bill_image: null } : w
+        w.address_name === c.address_name ? { ...w, bill_image: null, billFile: null, billPreview: null } : w
       ));
       alert('บันทึกค่าน้ำสำเร็จ');
     } catch (err) {
@@ -281,7 +287,6 @@ function DeductionManagementPage() {
       const formData = new FormData();
       formData.append('current_unit', c.current_unit);
       formData.append('bill_month', c.bill_month);
-      if (c.lastBillFile) formData.append('lastBill', c.lastBillFile);
       if (c.currentBillFile) formData.append('currentBill', c.currentBillFile);
 
       await axios.put(`/api/deductions/electric/${encodeURIComponent(c.address_name)}`,
@@ -290,7 +295,7 @@ function DeductionManagementPage() {
       );
       const { electricData } = await fetchCharges();
       setElectricCharges(electricData.map((e) =>
-        e.address_name === c.address_name ? { ...e, bill_last_image: null, bill_current_image: null } : e
+        e.address_name === c.address_name ? { ...e, bill_last_image: null, bill_current_image: null, currentBillFile: null, currentBillPreview: null } : e
       ));
       alert('บันทึกค่าไฟสำเร็จ');
     } catch (err) {
@@ -458,12 +463,16 @@ function DeductionManagementPage() {
                 />
               </td>
               <td className="px-4 py-2">
-                {c.bill_image && (
-                  <img
-                    src={`/uploads/${c.bill_image}`}
-                    alt="บิลน้ำ"
-                    className="max-h-24 mb-1"
-                  />
+                {c.billPreview ? (
+                  <img src={c.billPreview} alt="บิลน้ำ" className="max-h-24 mb-1" />
+                ) : (
+                  c.bill_image && (
+                    <img
+                      src={`/uploads/${c.bill_image}`}
+                      alt="บิลน้ำ"
+                      className="max-h-24 mb-1"
+                    />
+                  )
                 )}
                 <input
                   type="file"
@@ -540,19 +549,18 @@ function DeductionManagementPage() {
                     className="max-h-24 mb-1"
                   />
                 )}
-                <input
-                  type="file"
-                  onChange={(e) => handleFileChange('electric', idx, 'lastBillFile', e.target.files[0])}
-                  className="mt-1"
-                />
               </td>
               <td className="px-4 py-2">
-                {c.bill_current_image && (
-                  <img
-                    src={`/uploads/${c.bill_current_image}`}
-                    alt="บิลปัจจุบัน"
-                    className="max-h-24 mb-1"
-                  />
+                {c.currentBillPreview ? (
+                  <img src={c.currentBillPreview} alt="บิลปัจจุบัน" className="max-h-24 mb-1" />
+                ) : (
+                  c.bill_current_image && (
+                    <img
+                      src={`/uploads/${c.bill_current_image}`}
+                      alt="บิลปัจจุบัน"
+                      className="max-h-24 mb-1"
+                    />
+                  )
                 )}
                 <input
                   type="file"
