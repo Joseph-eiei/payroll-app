@@ -133,6 +133,20 @@ exports.getMonthlyPayroll = async (req, res) => {
       const waterDed = await calcWaterDed(emp, `${month}-01`);
       const electricDed = await calcElectricDed(emp, `${month}-01`);
 
+      // fetch outstanding advances for this employee
+      const { rows: adv } = await pool.query(
+        'SELECT id, name, total_amount FROM AdvanceLoans WHERE employee_id=$1 AND total_amount > 0 ORDER BY id',
+        [emp.id]
+      );
+
+      // fetch current savings balance
+      const { rows: sav } = await pool.query(
+        `SELECT COALESCE(SUM(CASE WHEN is_deposit THEN amount ELSE -amount END),0) AS balance
+         FROM SavingsTransactions WHERE employee_id=$1`,
+        [emp.id]
+      );
+      const savingsBalance = sav.length ? parseFloat(sav[0].balance) : 0;
+
       let otherDed = 0;
       const deductionDetails = [];
       const baseForDeduction = details.basePay + details.otPay;
@@ -165,6 +179,9 @@ exports.getMonthlyPayroll = async (req, res) => {
         deductions_total: parseFloat(deductionsTotal.toFixed(2)),
         net_pay: parseFloat(netPay.toFixed(2)),
         deduction_details: deductionDetails,
+        advances: adv,
+        savings_balance: parseFloat(savingsBalance.toFixed(2)),
+        savings_monthly_amount: parseFloat(emp.savings_monthly_amount) || 0,
       });
     }
 
@@ -214,6 +231,17 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
       const deductionsTotal = period === 'second' ? waterDed + electricDed + otherDed : 0;
       const netPay = part.totalIncome - deductionsTotal;
 
+      const { rows: adv } = await pool.query(
+        'SELECT id, name, total_amount FROM AdvanceLoans WHERE employee_id=$1 AND total_amount > 0 ORDER BY id',
+        [emp.id]
+      );
+      const { rows: sav } = await pool.query(
+        `SELECT COALESCE(SUM(CASE WHEN is_deposit THEN amount ELSE -amount END),0) AS balance
+         FROM SavingsTransactions WHERE employee_id=$1`,
+        [emp.id]
+      );
+      const savingsBalance = sav.length ? parseFloat(sav[0].balance) : 0;
+
       result.push({
         employee_id: emp.id,
         name: `${emp.first_name} ${emp.last_name}`,
@@ -234,6 +262,9 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
         deductions_total: parseFloat(deductionsTotal.toFixed(2)),
         net_pay: parseFloat(netPay.toFixed(2)),
         deduction_details: deductionDetails,
+        advances: adv,
+        savings_balance: parseFloat(savingsBalance.toFixed(2)),
+        savings_monthly_amount: parseFloat(emp.savings_monthly_amount) || 0,
       });
     }
 
@@ -245,7 +276,13 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
 };
 
 exports.recordMonthlyPayroll = async (req, res) => {
-  const { employeeId, month } = req.body;
+  const {
+    employeeId,
+    month,
+    advanceDeductions = [],
+    savingsWithdraw = false,
+    savingsRemark = '',
+  } = req.body;
   const payMonth = month || new Date().toISOString().slice(0, 7);
   const monthStart = new Date(`${payMonth}-01`);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
@@ -269,8 +306,57 @@ exports.recordMonthlyPayroll = async (req, res) => {
       otherDed += amount;
     }
 
+    let advanceTotal = 0;
+    for (const ad of advanceDeductions) {
+      const amt = parseFloat(ad.amount) || 0;
+      if (amt <= 0) continue;
+      advanceTotal += amt;
+      await pool.query(
+        'UPDATE AdvanceLoans SET total_amount = total_amount - $1, updated_at=$3 WHERE id = $2',
+        [amt, ad.id, `${payMonth}-01`]
+      );
+      await pool.query(
+        `INSERT INTO AdvanceTransactions (advance_id, amount, transaction_date, remark)
+         VALUES ($1, $2, $3, $4)`,
+        [ad.id, -amt, `${payMonth}-01`, ad.remark || '']
+      );
+    }
+
+    let savingsIncome = 0;
+    let savingsDed = 0;
+    const savingsMonthly = parseFloat(emp.savings_monthly_amount) || 0;
+    if (savingsWithdraw) {
+      const { rows: sav } = await pool.query(
+        `SELECT COALESCE(SUM(CASE WHEN is_deposit THEN amount ELSE -amount END),0) AS bal
+         FROM SavingsTransactions WHERE employee_id=$1`,
+        [employeeId]
+      );
+      let bal = sav.length ? parseFloat(sav[0].bal) : 0;
+      const payDate = new Date(`${payMonth}-01`);
+      if (payDate.getMonth() === 11 && bal >= 5500) bal += 1375;
+      savingsIncome = bal;
+      if (bal > 0) {
+        await pool.query(
+          `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
+           VALUES ($1, $2, $3, false, $4)`,
+          [employeeId, bal, `${payMonth}-01`, savingsRemark]
+        );
+      }
+    } else {
+      savingsDed = savingsMonthly;
+      if (savingsMonthly > 0) {
+        await pool.query(
+          `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
+           VALUES ($1, $2, $3, true, $4)`,
+          [employeeId, savingsMonthly, `${payMonth}-01`, savingsRemark]
+        );
+      }
+    }
+
+    otherDed += advanceTotal + savingsDed;
+    const totalIncome = details.totalIncome + savingsIncome;
     const deductionsTotal = waterDed + electricDed + otherDed;
-    const netPay = details.totalIncome - deductionsTotal;
+    const netPay = totalIncome - deductionsTotal;
 
     await pool.query(
       `INSERT INTO PayrollRecords (
@@ -312,7 +398,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
         parseFloat(electricDed.toFixed(2)),
         parseFloat(otherDed.toFixed(2)),
         parseFloat(deductionsTotal.toFixed(2)),
-        details.totalIncome,
+        totalIncome,
         parseFloat(netPay.toFixed(2)),
       ]
     );
@@ -325,7 +411,14 @@ exports.recordMonthlyPayroll = async (req, res) => {
 };
 
 exports.recordSemiMonthlyPayroll = async (req, res) => {
-  const { employeeId, month, period } = req.body;
+  const {
+    employeeId,
+    month,
+    period,
+    advanceDeductions = [],
+    savingsWithdraw = false,
+    savingsRemark = '',
+  } = req.body;
   const payMonth = month || new Date().toISOString().slice(0, 7);
   const per = period === 'second' ? 'second' : 'first';
   const monthStart = new Date(`${payMonth}-01`);
@@ -354,8 +447,57 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
       otherDed += amount;
     }
 
+    let advanceTotal = 0;
+    for (const ad of advanceDeductions) {
+      const amt = parseFloat(ad.amount) || 0;
+      if (amt <= 0) continue;
+      advanceTotal += amt;
+      await pool.query(
+        'UPDATE AdvanceLoans SET total_amount = total_amount - $1, updated_at=$3 WHERE id = $2',
+        [amt, ad.id, `${payMonth}-01`]
+      );
+      await pool.query(
+        `INSERT INTO AdvanceTransactions (advance_id, amount, transaction_date, remark)
+         VALUES ($1, $2, $3, $4)`,
+        [ad.id, -amt, `${payMonth}-01`, ad.remark || '']
+      );
+    }
+
+    let savingsIncome = 0;
+    let savingsDed = 0;
+    const savingsMonthly = parseFloat(emp.savings_monthly_amount) || 0;
+    if (savingsWithdraw) {
+      const { rows: sav } = await pool.query(
+        `SELECT COALESCE(SUM(CASE WHEN is_deposit THEN amount ELSE -amount END),0) AS bal
+         FROM SavingsTransactions WHERE employee_id=$1`,
+        [employeeId]
+      );
+      let bal = sav.length ? parseFloat(sav[0].bal) : 0;
+      const payDate = new Date(`${payMonth}-01`);
+      if (payDate.getMonth() === 11 && bal >= 5500) bal += 1375;
+      savingsIncome = bal;
+      if (bal > 0) {
+        await pool.query(
+          `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
+           VALUES ($1, $2, $3, false, $4)`,
+          [employeeId, bal, `${payMonth}-01`, savingsRemark]
+        );
+      }
+    } else {
+      savingsDed = savingsMonthly;
+      if (savingsMonthly > 0) {
+        await pool.query(
+          `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
+           VALUES ($1, $2, $3, true, $4)`,
+          [employeeId, savingsMonthly, `${payMonth}-01`, savingsRemark]
+        );
+      }
+    }
+
+    otherDed += advanceTotal + savingsDed;
+    const totalIncome = part.totalIncome + savingsIncome;
     const deductionsTotal = per === 'second' ? waterDed + electricDed + otherDed : 0;
-    const netPay = part.totalIncome - deductionsTotal;
+    const netPay = totalIncome - deductionsTotal;
 
     await pool.query(
       `INSERT INTO HalfPayrollRecords (
@@ -398,7 +540,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
         parseFloat(electricDed.toFixed(2)),
         parseFloat(otherDed.toFixed(2)),
         parseFloat(deductionsTotal.toFixed(2)),
-        part.totalIncome,
+        totalIncome,
         parseFloat(netPay.toFixed(2)),
       ]
     );
