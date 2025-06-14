@@ -11,6 +11,14 @@ function PayrollPage() {
   const [advanceInputs, setAdvanceInputs] = useState({});
   const [savingInputs, setSavingInputs] = useState({});
 
+  const computeNetPay = (p) => {
+    const advs = advanceInputs[p.employee_id] || {};
+    const advTotal = Object.values(advs).reduce(
+      (sum, val) => sum + (parseFloat(val.amount) || 0),
+      0,
+    );
+    return (p.net_pay - advTotal).toFixed(2);
+  };
 
   const fetchPayroll = async (m) => {
     try {
@@ -247,7 +255,7 @@ function PayrollPage() {
             {showDeduction && (
               <td className="px-2 py-1 text-right">{p.deductions_total.toFixed(2)}</td>
             )}
-            <td className="px-2 py-1 text-right">{p.net_pay.toFixed(2)}</td>
+            <td className="px-2 py-1 text-right">{computeNetPay(p)}</td>
             <td className="px-2 py-1 text-center">
               <button
                 onClick={() => handleConfirm(p.employee_id)}
