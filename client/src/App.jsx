@@ -18,6 +18,7 @@ import BillHistoryPage from './pages/BillHistoryPage';
 import AdvanceHistoryPage from './pages/AdvanceHistoryPage';
 import SavingsHistoryPage from './pages/SavingsHistoryPage';
 import PayrollPage from './pages/PayrollPage';
+import PayrollHistoryPage from './pages/PayrollHistoryPage';
 
 
 // --- Main App Component ---
@@ -101,6 +102,7 @@ function AppContent() {
           <Route path="/admin/advance-history" element={<AdvanceHistoryPage />} />
           <Route path="/admin/savings-history" element={<SavingsHistoryPage />} />
           <Route path="/admin/payroll" element={<PayrollPage />} />
+          <Route path="/admin/payroll-history" element={<PayrollHistoryPage />} />
           <Route path="/admin/history" element={<WorkHistoryPage />} />
           <Route element={<SuperuserRoute />}>
             <Route path="/admin/create-admin" element={<AdminCreatePage />} />

@@ -28,6 +28,7 @@ app.use('/api/deductions', require('./routes/deductionRoutes'));
 app.use('/api/advances', require('./routes/advanceRoutes'));
 app.use('/api/savings', require('./routes/savingsRoutes'));
 app.use('/api/admins', require('./routes/adminRoutes'));
+app.use('/api/payroll', require('./routes/payrollRoutes'));
 
 // Automatically remove last month's verified attendance records on the 10th of each month
 cron.schedule('0 0 10 * *', async () => {

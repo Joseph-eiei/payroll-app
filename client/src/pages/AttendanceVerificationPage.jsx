@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
 
 // --- Helper Components ---
@@ -14,7 +13,6 @@ function AttendanceVerificationPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10));
-  const [editingSubmission, setEditingSubmission] = useState(null); // State to hold submission being edited
 
   useEffect(() => {
     fetchSubmissions(filterDate);
@@ -97,7 +95,6 @@ function AttendanceVerificationPage() {
     // For a real app, you would probably open a modal with a form similar to AttendancePage
     // and populate it with the 'submission' data.
     alert(`ฟังก์ชั่นแก้ไขสำหรับรายการ #${submission.submission_id} (ยังไม่ได้ทำ)\nในแอปจริง ส่วนนี้จะเปิด Modal หรือฟอร์มให้แก้ไขข้อมูล`);
-    setEditingSubmission(submission); // Example of setting state for an editing modal
   };
 
   return (
