@@ -2,44 +2,125 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 function PayrollPage() {
-  const [employees, setEmployees] = useState([]);
+  const [payroll, setPayroll] = useState([]);
   const [error, setError] = useState('');
   const [cycle, setCycle] = useState('รายเดือน');
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [halfPeriod, setHalfPeriod] = useState('1-15');
 
-  const fetchEmployees = async (selectedCycle) => {
+
+  const fetchPayroll = async (m) => {
     try {
-      const res = await axios.get(`/api/employees/cycle/${selectedCycle}`);
-      setEmployees(res.data);
+      const res = await axios.get(`/api/payroll/monthly?month=${m}`);
+      const sorted = res.data.sort((a, b) => {
+        if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
+        if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;
+        return a.employee_id - b.employee_id;
+      });
+      setPayroll(sorted);
     } catch (err) {
       console.error(err);
-      setError('ไม่สามารถโหลดข้อมูลพนักงาน');
+      setError('ไม่สามารถโหลดข้อมูลเงินเดือน');
+    }
+  };
+
+  const fetchSemiPayroll = async (m, period) => {
+    try {
+      const p = period === '16-สิ้นเดือน' ? 'second' : 'first';
+      const res = await axios.get(`/api/payroll/semi-monthly?month=${m}&period=${p}`);
+      const sorted = res.data.sort((a, b) => {
+        if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
+        if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;
+        return a.employee_id - b.employee_id;
+      });
+      setPayroll(sorted);
+    } catch (err) {
+      console.error(err);
+      setError('ไม่สามารถโหลดข้อมูลเงินเดือน');
     }
   };
 
   useEffect(() => {
-    fetchEmployees(cycle);
-  }, [cycle]);
+    if (cycle === 'รายเดือน') {
+      fetchPayroll(month);
+    } else {
+      fetchSemiPayroll(month, halfPeriod);
+    }
+  }, [cycle, month, halfPeriod]);
 
-  const renderTable = emps => (
-    <table className="min-w-full bg-white shadow rounded">
+
+  const handleConfirm = async (id) => {
+    try {
+      if (cycle === 'รายเดือน') {
+        await axios.post('/api/payroll/monthly/record', { employeeId: id, month });
+      } else {
+        const p = halfPeriod === '16-สิ้นเดือน' ? 'second' : 'first';
+        await axios.post('/api/payroll/semi-monthly/record', { employeeId: id, month, period: p });
+      }
+      alert('บันทึกสำเร็จ');
+    } catch (err) {
+      console.error(err);
+      alert('บันทึกไม่สำเร็จ');
+    }
+  };
+
+  const renderPayrollTable = (data, showDeduction = true) => (
+    <table className="min-w-full bg-white shadow rounded text-sm">
       <thead className="bg-gray-100">
         <tr>
-          <th className="px-4 py-2 text-left">รหัส</th>
-          <th className="px-4 py-2 text-left">ชื่อพนักงาน</th>
-          <th className="px-4 py-2 text-left">ค่าแรง/วัน</th>
-          <th className="px-4 py-2 text-left">เงินเดือนประมาณ</th>
+          <th className="px-2 py-2">รหัส</th>
+          <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+          <th className="px-2 py-2">วันทำงาน</th>
+          <th className="px-2 py-2">ชั่วโมง</th>
+          <th className="px-2 py-2">เบี้ยขยัน</th>
+          <th className="px-2 py-2">ค่าแรงรวม</th>
+          <th className="px-2 py-2">OT(ชม.)</th>
+          <th className="px-2 py-2">ค่า OT</th>
+          <th className="px-2 py-2">อาทิตย์(วัน)</th>
+          <th className="px-2 py-2">ค่าอาทิตย์</th>
+          <th className="px-2 py-2">รวมรายได้</th>
+          {showDeduction && <th className="px-2 py-2">ค่าน้ำ</th>}
+          {showDeduction && <th className="px-2 py-2">ค่าไฟ</th>}
+          {showDeduction && <th className="px-2 py-2">หักอื่นๆ</th>}
+          {showDeduction && <th className="px-2 py-2">รวมยอดหัก</th>}
+          <th className="px-2 py-2">รับสุทธิ</th>
+          <th className="px-2 py-2" />
         </tr>
       </thead>
       <tbody>
-        {emps.map(e => (
-          <tr key={e.id} className="border-t">
-            <td className="px-4 py-2">{e.employee_code || e.id}</td>
-            <td className="px-4 py-2">{e.first_name} {e.last_name}</td>
-            <td className="px-4 py-2 text-right">{parseFloat(e.daily_wage).toFixed(2)}</td>
-            <td className="px-4 py-2 text-right">
-              {e.payment_cycle === 'รายเดือน'
-                ? (e.daily_wage * 30).toFixed(2)
-                : (e.daily_wage * 15).toFixed(2)}
+        {data.map((p) => (
+          <tr key={p.employee_id} className="border-t">
+            <td className="px-2 py-1 text-center">{p.employee_id}</td>
+            <td className="px-2 py-1">{p.name}</td>
+            <td className="px-2 py-1 text-center">{p.days_worked}</td>
+            <td className="px-2 py-1 text-center">{p.hours_worked}</td>
+            <td className="px-2 py-1 text-center">{p.bonus_count}</td>
+            <td className="px-2 py-1 text-right">{p.base_pay.toFixed(2)}</td>
+            <td className="px-2 py-1 text-center">{p.ot_hours}</td>
+            <td className="px-2 py-1 text-right">{p.ot_pay.toFixed(2)}</td>
+            <td className="px-2 py-1 text-center">{p.sunday_days}</td>
+            <td className="px-2 py-1 text-right">{p.sunday_pay.toFixed(2)}</td>
+            <td className="px-2 py-1 text-right">{p.total_income.toFixed(2)}</td>
+            {showDeduction && (
+              <td className="px-2 py-1 text-right">{p.water_deduction.toFixed(2)}</td>
+            )}
+            {showDeduction && (
+              <td className="px-2 py-1 text-right">{p.electric_deduction.toFixed(2)}</td>
+            )}
+            {showDeduction && (
+              <td className="px-2 py-1 text-right">{p.other_deductions.toFixed(2)}</td>
+            )}
+            {showDeduction && (
+              <td className="px-2 py-1 text-right">{p.deductions_total.toFixed(2)}</td>
+            )}
+            <td className="px-2 py-1 text-right">{p.net_pay.toFixed(2)}</td>
+            <td className="px-2 py-1 text-center">
+              <button
+                onClick={() => handleConfirm(p.employee_id)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+              >
+                ยืนยันบิล
+              </button>
             </td>
           </tr>
         ))}
@@ -63,11 +144,36 @@ function PayrollPage() {
           <option value="ครึ่งเดือน">ครึ่งเดือน</option>
         </select>
       </div>
+      {(cycle === 'รายเดือน' || cycle === 'ครึ่งเดือน') && (
+        <div className="mb-4">
+          <label className="mr-2 font-semibold">เดือน</label>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="border p-2"
+          />
+        </div>
+      )}
 
-      {employees.length > 0 ? (
-        renderTable(employees)
+      {cycle === 'ครึ่งเดือน' && (
+        <div className="mb-4">
+          <label className="mr-2 font-semibold">รอบ</label>
+          <select
+            value={halfPeriod}
+            onChange={(e) => setHalfPeriod(e.target.value)}
+            className="border p-2"
+          >
+            <option value="1-15">1-15</option>
+            <option value="16-สิ้นเดือน">16-สิ้นเดือน</option>
+          </select>
+        </div>
+      )}
+
+      {payroll.length > 0 ? (
+        renderPayrollTable(payroll, cycle === 'รายเดือน' || halfPeriod === '16-สิ้นเดือน')
       ) : (
-        <p className="text-red-500">ไม่พบข้อมูลพนักงานรอบจ่าย{cycle}</p>
+        <p className="text-red-500">ไม่พบข้อมูลเงินเดือน</p>
       )}
     </div>
   );

@@ -145,3 +145,50 @@ CREATE TABLE IF NOT EXISTS SavingsTransactions (
     remark TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Monthly payroll records
+CREATE TABLE IF NOT EXISTS PayrollRecords (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER REFERENCES Employees(id) ON DELETE CASCADE,
+    pay_month DATE NOT NULL,
+    days_worked NUMERIC(5,2) DEFAULT 0,
+    hours_worked NUMERIC(5,2) DEFAULT 0,
+    bonus_count INTEGER DEFAULT 0,
+    ot_hours NUMERIC(5,2) DEFAULT 0,
+    sunday_days NUMERIC(5,2) DEFAULT 0,
+    base_pay NUMERIC(12,2) DEFAULT 0,
+    ot_pay NUMERIC(12,2) DEFAULT 0,
+    sunday_pay NUMERIC(12,2) DEFAULT 0,
+    water_deduction NUMERIC(12,2) DEFAULT 0,
+    electric_deduction NUMERIC(12,2) DEFAULT 0,
+    other_deductions NUMERIC(12,2) DEFAULT 0,
+    deductions_total NUMERIC(12,2) DEFAULT 0,
+    total_income NUMERIC(12,2) DEFAULT 0,
+    net_pay NUMERIC(12,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, pay_month)
+);
+
+-- Semi-monthly payroll records
+CREATE TABLE IF NOT EXISTS HalfPayrollRecords (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER REFERENCES Employees(id) ON DELETE CASCADE,
+    pay_month DATE NOT NULL,
+    period VARCHAR(10) NOT NULL,
+    days_worked NUMERIC(5,2) DEFAULT 0,
+    hours_worked NUMERIC(5,2) DEFAULT 0,
+    bonus_count INTEGER DEFAULT 0,
+    ot_hours NUMERIC(5,2) DEFAULT 0,
+    sunday_days NUMERIC(5,2) DEFAULT 0,
+    base_pay NUMERIC(12,2) DEFAULT 0,
+    ot_pay NUMERIC(12,2) DEFAULT 0,
+    sunday_pay NUMERIC(12,2) DEFAULT 0,
+    water_deduction NUMERIC(12,2) DEFAULT 0,
+    electric_deduction NUMERIC(12,2) DEFAULT 0,
+    other_deductions NUMERIC(12,2) DEFAULT 0,
+    deductions_total NUMERIC(12,2) DEFAULT 0,
+    total_income NUMERIC(12,2) DEFAULT 0,
+    net_pay NUMERIC(12,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, pay_month, period)
+);

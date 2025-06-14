@@ -11,6 +11,7 @@ function WorkHistoryPage() {
       const res = await axios.get('/api/attendance/history');
       setForms(res.data);
     } catch (err) {
+      console.error(err);
       setError('ไม่สามารถโหลดข้อมูลได้');
     }
   };

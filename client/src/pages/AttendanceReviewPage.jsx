@@ -19,6 +19,7 @@ function AttendanceReviewPage() {
       const res = await axios.get('/api/attendance/pending');
       setForms(res.data);
     } catch (err) {
+      console.error(err);
       setError('ไม่สามารถโหลดข้อมูลได้');
     }
   };
@@ -54,6 +55,7 @@ function AttendanceReviewPage() {
       await axios.put(`/api/attendance/${id}/verify`, { isBonus });
       fetchForms();
     } catch (err) {
+      console.error(err);
       alert('เกิดข้อผิดพลาดในการยืนยัน');
     }
   };
@@ -64,6 +66,7 @@ function AttendanceReviewPage() {
       await axios.delete(`/api/attendance/${id}`);
       fetchForms();
     } catch (err) {
+      console.error(err);
       alert('เกิดข้อผิดพลาดในการลบ');
     }
   };
@@ -140,10 +143,11 @@ function AttendanceReviewPage() {
       setEditingForm(null);
       setEditData(null);
       fetchForms();
-    } catch (err) {
-      alert('บันทึกไม่สำเร็จ');
-    }
-  };
+      } catch (err) {
+        console.error(err);
+        alert('บันทึกไม่สำเร็จ');
+      }
+    };
 
   return (
     <div className="p-6 max-w-6xl mx-auto text-black">
