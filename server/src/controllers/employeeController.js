@@ -78,7 +78,10 @@ exports.createEmployee = async (req, res) => {
         status,
         water_address,
         electric_address,
-        supervisor_admin_id
+        supervisor_admin_id,
+        bank_name,
+        bank_account_number,
+        bank_account_name
     } = req.body;
 
     // Validation for required fields
@@ -140,9 +143,12 @@ exports.createEmployee = async (req, res) => {
                 first_name, last_name, nickname,
                 daily_wage, savings_monthly_amount, nationality, payment_cycle,
                 employee_role, status, water_address, electric_address,
-                supervisor_admin_id, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-            RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`,
+                supervisor_admin_id, bank_name, bank_account_number, bank_account_name,
+                created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                $13, $14, $15, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address, bank_name, bank_account_number, bank_account_name`,
             [
                 first_name,
                 last_name,
@@ -155,7 +161,10 @@ exports.createEmployee = async (req, res) => {
                 status,
                 water_address || null,
                 electric_address || null,
-                supervisorIdFinal
+                supervisorIdFinal,
+                bank_name || null,
+                bank_account_number || null,
+                bank_account_name || null
             ]
         );
         res.status(201).json(newEmployee.rows[0]);
@@ -219,7 +228,8 @@ exports.updateEmployee = async (req, res) => {
     const allowedUpdates = [
         'first_name', 'last_name', 'nickname',
         'daily_wage', 'savings_monthly_amount', 'nationality', 'payment_cycle',
-        'employee_role', 'status', 'water_address', 'electric_address', 'supervisor_admin_id'
+        'employee_role', 'status', 'water_address', 'electric_address', 'supervisor_admin_id',
+        'bank_name', 'bank_account_number', 'bank_account_name'
     ];
 
     const fieldsToUpdate = {};
@@ -306,7 +316,7 @@ exports.updateEmployee = async (req, res) => {
     }
     values.push(id);
 
-    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address`;
+    const queryText = `UPDATE Employees SET ${setClauses.join(', ')} WHERE id = $${valueCount} RETURNING id, first_name, last_name, nickname, daily_wage, savings_monthly_amount, nationality, payment_cycle, employee_role, status, supervisor_admin_id, created_at, updated_at, water_address, electric_address, bank_name, bank_account_number, bank_account_name`;
 
     try {
         const updatedEmployee = await pool.query(queryText, values);

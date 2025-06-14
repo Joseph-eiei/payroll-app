@@ -556,7 +556,8 @@ exports.getMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, e.first_name, e.last_name, e.nationality
+      `SELECT p.*, e.first_name, e.last_name, e.nationality,
+              e.bank_name, e.bank_account_number, e.bank_account_name
        FROM PayrollRecords p
        JOIN Employees e ON p.employee_id = e.id
        WHERE to_char(p.pay_month, 'YYYY-MM') = $1`,
@@ -620,7 +621,8 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT h.*, e.first_name, e.last_name, e.nationality, e.daily_wage
+      `SELECT h.*, e.first_name, e.last_name, e.nationality, e.daily_wage,
+              e.bank_name, e.bank_account_number, e.bank_account_name
        FROM HalfPayrollRecords h
        JOIN Employees e ON h.employee_id = e.id
        WHERE to_char(h.pay_month, 'YYYY-MM') = $1`,
