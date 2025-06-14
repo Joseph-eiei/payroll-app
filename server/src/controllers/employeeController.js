@@ -144,6 +144,32 @@ exports.createEmployee = async (req, res) => {
     }
 };
 
+// @desc    Get employees by payment cycle
+// @route   GET /api/employees/cycle/:cycle
+// @access  Private (Admin)
+exports.getEmployeesByCycle = async (req, res) => {
+    const { cycle } = req.params;
+    const allowed = ['รายเดือน', 'ครึ่งเดือน'];
+    if (!allowed.includes(cycle)) {
+        return res.status(400).json({ msg: `Invalid payment cycle. Allowed values are: ${allowed.join(', ')}.` });
+    }
+
+    try {
+        const query = `
+            SELECT e.*, a.name AS supervisor_name
+            FROM Employees e
+            LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
+            WHERE e.payment_cycle = $1
+            ORDER BY e.created_at DESC
+        `;
+        const employees = await pool.query(query, [cycle]);
+        res.json(employees.rows);
+    } catch (err) {
+        console.error('Error in getEmployeesByCycle:', err.message);
+        res.status(500).send('Server error while fetching employees by payment cycle');
+    }
+};
+
 // @desc    Update an existing employee
 // @route   PUT /api/employees/:id
 // @access  Private (Admin)
