@@ -184,7 +184,6 @@ exports.getElectricCharges = async (req, res) => {
 exports.updateElectricCharge = async (req, res) => {
     const { address } = req.params;
     const { current_unit, bill_month } = req.body;
-    const lastFile = req.files && req.files.lastBill ? req.files.lastBill[0].filename : null;
     const currentFile = req.files && req.files.currentBill ? req.files.currentBill[0].filename : null;
 
     const current = parseFloat(current_unit) || 0;
@@ -196,25 +195,24 @@ exports.updateElectricCharge = async (req, res) => {
         await pool.query('INSERT INTO ElectricAddresses(address_name) VALUES ($1) ON CONFLICT DO NOTHING', [address]);
 
         let lastUnit = 0;
+        let lastImage = null;
         const { rows: prev } = await pool.query(
-            'SELECT current_unit FROM ElectricBills WHERE address_name=$1 ORDER BY bill_month DESC LIMIT 1',
-            [address]
+            'SELECT current_unit, bill_current_image FROM ElectricBills WHERE address_name=$1 AND bill_month < $2 ORDER BY bill_month DESC LIMIT 1',
+            [address, month]
         );
         if (prev.length) {
             lastUnit = prev[0].current_unit || 0;
+            lastImage = prev[0].bill_current_image || null;
         }
-
         let oldLast = null;
         let oldCurrent = null;
-        if (lastFile || currentFile) {
-            const { rows: existing } = await pool.query(
-                'SELECT bill_last_image, bill_current_image FROM ElectricBills WHERE address_name=$1 AND bill_month=$2',
-                [address, month]
-            );
-            if (existing.length) {
-                oldLast = existing[0].bill_last_image;
-                oldCurrent = existing[0].bill_current_image;
-            }
+        const { rows: existing } = await pool.query(
+            'SELECT bill_last_image, bill_current_image FROM ElectricBills WHERE address_name=$1 AND bill_month=$2',
+            [address, month]
+        );
+        if (existing.length) {
+            oldLast = existing[0].bill_last_image;
+            oldCurrent = existing[0].bill_current_image;
         }
 
         const { rows } = await pool.query(
@@ -229,12 +227,12 @@ exports.updateElectricCharge = async (req, res) => {
                 bill_current_image=COALESCE($6, ElectricBills.bill_current_image),
                 created_at=CURRENT_TIMESTAMP
             RETURNING *`,
-            [address, month, lastUnit, current, lastFile, currentFile]
+            [address, month, lastUnit, current, lastImage, currentFile]
         );
 
         await pool.query('COMMIT');
 
-        if (lastFile && oldLast && oldLast !== rows[0].bill_last_image) {
+        if (oldLast && lastImage && oldLast !== lastImage) {
             const filePath = path.join(__dirname, '../../uploads', oldLast);
             try { await fs.promises.unlink(filePath); } catch (err) { if (err.code !== 'ENOENT') console.error('Error deleting old bill file:', err.message); }
         }
