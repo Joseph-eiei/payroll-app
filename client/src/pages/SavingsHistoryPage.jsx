@@ -5,6 +5,10 @@ function SavingsHistoryPage() {
   const [employees, setEmployees] = useState([]);
   const [selected, setSelected] = useState('');
   const [history, setHistory] = useState([]);
+  const total = history.reduce(
+    (sum, t) => sum + (t.is_deposit ? parseFloat(t.amount) : -parseFloat(t.amount)),
+    0,
+  );
 
   const fetchEmployees = async () => {
     try {
@@ -47,6 +51,7 @@ function SavingsHistoryPage() {
         ))}
       </select>
       {history.length > 0 ? (
+        <>
         <table className="min-w-full text-sm bg-white shadow">
           <thead className="bg-gray-100">
             <tr>
@@ -67,6 +72,8 @@ function SavingsHistoryPage() {
             ))}
           </tbody>
         </table>
+        <div className="mt-2 text-sm font-semibold">ยอดรวม {total.toFixed(2)}</div>
+        </>
       ) : (
         selected && <div className="text-sm text-gray-500">ไม่มีประวัติ</div>
       )}

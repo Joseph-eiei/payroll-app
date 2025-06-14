@@ -17,7 +17,10 @@ function PayrollPage() {
       (sum, val) => sum + (parseFloat(val.amount) || 0),
       0,
     );
-    return (p.net_pay - advTotal).toFixed(2);
+    const sav = savingInputs[p.employee_id] || {};
+    const deposit = sav.withdraw ? 0 : p.savings_monthly_amount;
+    const withdrawAmt = sav.withdraw ? p.savings_balance : 0;
+    return (p.net_pay - advTotal - deposit + withdrawAmt).toFixed(2);
   };
 
   const fetchPayroll = async (m) => {
@@ -216,8 +219,13 @@ function PayrollPage() {
             )}
             {showDeduction && (
               <td className="px-2 py-1">
-                <div className="mb-1 text-xs">
-                  ฝาก {p.savings_monthly_amount.toFixed(2)} (ยอดปัจจุบัน {p.savings_balance.toFixed(2)})
+                <div className="mb-1 text-xs whitespace-pre-line">
+                  {(() => {
+                    const withdraw = savingInputs[p.employee_id]?.withdraw;
+                    const depositAmt = withdraw ? 0 : p.savings_monthly_amount;
+                    const newBal = withdraw ? 0 : p.savings_balance + depositAmt;
+                    return `ฝาก ${depositAmt.toFixed(2)}\nยอดสะสม ${newBal.toFixed(2)}`;
+                  })()}
                 </div>
                 <label className="text-xs mr-2">
                   <input
