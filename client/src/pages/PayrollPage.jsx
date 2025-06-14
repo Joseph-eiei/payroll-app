@@ -83,6 +83,7 @@ function PayrollPage() {
 
 
   const handleConfirm = async (id) => {
+    if (!window.confirm('เมื่อยืนยันแล้วจะไม่สามารถแก้ไขได้')) return;
     const adv = advanceInputs[id] || {};
     const advArr = Object.keys(adv).map((key) => ({
       id: parseInt(key, 10),
@@ -105,6 +106,7 @@ function PayrollPage() {
         await axios.post('/api/payroll/semi-monthly/record', { ...payload, period: p });
       }
       alert('บันทึกสำเร็จ');
+      setPayroll((prev) => prev.filter((p) => p.employee_id !== id));
     } catch (err) {
       console.error(err);
       alert('บันทึกไม่สำเร็จ');

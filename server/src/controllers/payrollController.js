@@ -121,7 +121,14 @@ exports.getMonthlyPayroll = async (req, res) => {
 
   try {
     const { rows: employees } = await pool.query(
-      "SELECT * FROM Employees WHERE payment_cycle='รายเดือน' ORDER BY id"
+      `SELECT * FROM Employees
+        WHERE payment_cycle='รายเดือน'
+          AND id NOT IN (
+            SELECT employee_id FROM PayrollRecords
+            WHERE to_char(pay_month, 'YYYY-MM')=$1
+          )
+        ORDER BY id`,
+      [month]
     );
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
@@ -204,7 +211,14 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
 
   try {
     const { rows: employees } = await pool.query(
-      "SELECT * FROM Employees WHERE payment_cycle='ครึ่งเดือน' ORDER BY id"
+      `SELECT * FROM Employees
+        WHERE payment_cycle='ครึ่งเดือน'
+          AND id NOT IN (
+            SELECT employee_id FROM HalfPayrollRecords
+            WHERE to_char(pay_month, 'YYYY-MM')=$1 AND period=$2
+          )
+        ORDER BY id`,
+      [month, period]
     );
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
@@ -291,6 +305,13 @@ exports.recordMonthlyPayroll = async (req, res) => {
     const empRes = await pool.query('SELECT * FROM Employees WHERE id=$1', [employeeId]);
     if (!empRes.rows.length) return res.status(404).json({ msg: 'Employee not found' });
     const emp = empRes.rows[0];
+    const existing = await pool.query(
+      "SELECT 1 FROM PayrollRecords WHERE employee_id=$1 AND to_char(pay_month, 'YYYY-MM')=$2",
+      [employeeId, payMonth]
+    );
+    if (existing.rows.length) {
+      return res.status(400).json({ msg: 'already recorded' });
+    }
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
     );
@@ -366,23 +387,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
         total_income, net_pay
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16
-      )
-      ON CONFLICT (employee_id, pay_month)
-      DO UPDATE SET
-        days_worked=EXCLUDED.days_worked,
-        hours_worked=EXCLUDED.hours_worked,
-        bonus_count=EXCLUDED.bonus_count,
-        ot_hours=EXCLUDED.ot_hours,
-        sunday_days=EXCLUDED.sunday_days,
-        base_pay=EXCLUDED.base_pay,
-        ot_pay=EXCLUDED.ot_pay,
-        sunday_pay=EXCLUDED.sunday_pay,
-        water_deduction=EXCLUDED.water_deduction,
-        electric_deduction=EXCLUDED.electric_deduction,
-        other_deductions=EXCLUDED.other_deductions,
-        deductions_total=EXCLUDED.deductions_total,
-        total_income=EXCLUDED.total_income,
-        net_pay=EXCLUDED.net_pay`,
+      )`,
       [
         emp.id,
         `${payMonth}-01`,
@@ -431,6 +436,13 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
     const empRes = await pool.query('SELECT * FROM Employees WHERE id=$1', [employeeId]);
     if (!empRes.rows.length) return res.status(404).json({ msg: 'Employee not found' });
     const emp = empRes.rows[0];
+    const existing = await pool.query(
+      "SELECT 1 FROM HalfPayrollRecords WHERE employee_id=$1 AND to_char(pay_month, 'YYYY-MM')=$2 AND period=$3",
+      [employeeId, payMonth, per]
+    );
+    if (existing.rows.length) {
+      return res.status(400).json({ msg: 'already recorded' });
+    }
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
     );
@@ -507,23 +519,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
         total_income, net_pay
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
-      )
-      ON CONFLICT (employee_id, pay_month, period)
-      DO UPDATE SET
-        days_worked=EXCLUDED.days_worked,
-        hours_worked=EXCLUDED.hours_worked,
-        bonus_count=EXCLUDED.bonus_count,
-        ot_hours=EXCLUDED.ot_hours,
-        sunday_days=EXCLUDED.sunday_days,
-        base_pay=EXCLUDED.base_pay,
-        ot_pay=EXCLUDED.ot_pay,
-        sunday_pay=EXCLUDED.sunday_pay,
-        water_deduction=EXCLUDED.water_deduction,
-        electric_deduction=EXCLUDED.electric_deduction,
-        other_deductions=EXCLUDED.other_deductions,
-        deductions_total=EXCLUDED.deductions_total,
-        total_income=EXCLUDED.total_income,
-        net_pay=EXCLUDED.net_pay`,
+      )`,
       [
         emp.id,
         `${payMonth}-01`,
