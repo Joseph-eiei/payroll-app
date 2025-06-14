@@ -1,5 +1,6 @@
 const pool = require('../config/db'); // Your PostgreSQL connection pool
 const { getWaterAddresses, getElectricAddresses } = require('../utils/accommodation');
+const { isSuperuser, canAccessEmployee } = require('../utils/permissions');
 
 const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนักงาน", "ช่าง"];
 
@@ -8,13 +9,21 @@ const ALLOWED_EMPLOYEE_ROLES = ["หัวหน้างาน", "พนัก�
 // @access  Private (Admin)
 exports.getAllEmployees = async (req, res) => {
     try {
-        const query = `
+        const adminId = req.admin.id;
+        const superuser = await isSuperuser(adminId);
+
+        let query = `
             SELECT e.*, a.name AS supervisor_name
             FROM Employees e
-            LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
-            ORDER BY e.created_at DESC
-        `;
-        const allEmployees = await pool.query(query);
+            LEFT JOIN Admins a ON e.supervisor_admin_id = a.id`;
+        const params = [];
+        if (!superuser) {
+            query += ' WHERE e.supervisor_admin_id = $1';
+            params.push(adminId);
+        }
+        query += ' ORDER BY e.created_at DESC';
+
+        const allEmployees = await pool.query(query, params);
         res.json(allEmployees.rows);
     } catch (err) {
         console.error('Error in getAllEmployees:', err.message);
@@ -30,14 +39,22 @@ exports.getEmployeesByRole = async (req, res) => {
     }
 
     try {
-        const query = `
+        const adminId = req.admin.id;
+        const superuser = await isSuperuser(adminId);
+
+        let query = `
             SELECT e.*, a.name AS supervisor_name
             FROM Employees e
             LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
-            WHERE e.employee_role = $1
-            ORDER BY e.created_at DESC
-        `;
-        const employees = await pool.query(query, [role]);
+            WHERE e.employee_role = $1`;
+        const params = [role];
+        if (!superuser) {
+            query += ' AND e.supervisor_admin_id = $2';
+            params.push(adminId);
+        }
+        query += ' ORDER BY e.created_at DESC';
+
+        const employees = await pool.query(query, params);
         res.json(employees.rows);
     } catch (err) {
         console.error('Error in getEmployeesByRole:', err.message);
@@ -96,13 +113,20 @@ exports.createEmployee = async (req, res) => {
         }
     }
 
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
     let supervisorIdFinal = null;
-    if (supervisor_admin_id && supervisor_admin_id !== '') {
-        const parsedId = parseInt(supervisor_admin_id);
-        if (isNaN(parsedId)) {
-            return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
+    if (superuser) {
+        if (supervisor_admin_id && supervisor_admin_id !== '') {
+            const parsedId = parseInt(supervisor_admin_id);
+            if (isNaN(parsedId)) {
+                return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
+            }
+            supervisorIdFinal = parsedId;
         }
-        supervisorIdFinal = parsedId;
+    } else {
+        supervisorIdFinal = adminId;
     }
 
     // Validate employee_role
@@ -155,14 +179,22 @@ exports.getEmployeesByCycle = async (req, res) => {
     }
 
     try {
-        const query = `
+        const adminId = req.admin.id;
+        const superuser = await isSuperuser(adminId);
+
+        let query = `
             SELECT e.*, a.name AS supervisor_name
             FROM Employees e
             LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
-            WHERE e.payment_cycle = $1
-            ORDER BY e.created_at DESC
-        `;
-        const employees = await pool.query(query, [cycle]);
+            WHERE e.payment_cycle = $1`;
+        const params = [cycle];
+        if (!superuser) {
+            query += ' AND e.supervisor_admin_id = $2';
+            params.push(adminId);
+        }
+        query += ' ORDER BY e.created_at DESC';
+
+        const employees = await pool.query(query, params);
         res.json(employees.rows);
     } catch (err) {
         console.error('Error in getEmployeesByCycle:', err.message);
@@ -176,6 +208,13 @@ exports.getEmployeesByCycle = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
     const { id } = req.params;
     const receivedFields = req.body;
+
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
+    if (!(await canAccessEmployee(adminId, id))) {
+        return res.status(403).json({ msg: 'Access denied' });
+    }
 
     const allowedUpdates = [
         'first_name', 'last_name', 'nickname',
@@ -227,13 +266,15 @@ exports.updateEmployee = async (req, res) => {
                 }
                 fieldsToUpdate[key] = roleValue;
             } else if (key === 'supervisor_admin_id') {
-                const supId = receivedFields[key];
-                if (supId === '' || supId === null || typeof supId === 'undefined') {
-                    fieldsToUpdate[key] = null;
-                } else if (isNaN(parseInt(supId))) {
-                    return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
-                } else {
-                    fieldsToUpdate[key] = parseInt(supId);
+                if (superuser) {
+                    const supId = receivedFields[key];
+                    if (supId === '' || supId === null || typeof supId === 'undefined') {
+                        fieldsToUpdate[key] = null;
+                    } else if (isNaN(parseInt(supId))) {
+                        return res.status(400).json({ msg: 'Invalid supervisor admin id.' });
+                    } else {
+                        fieldsToUpdate[key] = parseInt(supId);
+                    }
                 }
             }
             else if (receivedFields[key] === '' && (key === 'nickname')) {
@@ -288,6 +329,12 @@ exports.updateEmployee = async (req, res) => {
 // @access  Private (Admin)
 exports.deleteEmployee = async (req, res) => {
     const { id } = req.params;
+    const adminId = req.admin.id;
+
+    if (!(await canAccessEmployee(adminId, id))) {
+        return res.status(403).json({ msg: 'Access denied' });
+    }
+
     try {
         const deleteOp = await pool.query('DELETE FROM Employees WHERE id = $1 RETURNING id, first_name, last_name', [id]);
         if (deleteOp.rowCount === 0) {
