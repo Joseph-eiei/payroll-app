@@ -562,6 +562,40 @@ exports.getMonthlyHistory = async (req, res) => {
        WHERE to_char(p.pay_month, 'YYYY-MM') = $1`,
       [month]
     );
+
+    const { rows: types } = await pool.query(
+      'SELECT name, rate FROM DeductionTypes ORDER BY id'
+    );
+
+    for (const r of rows) {
+      const base = parseFloat(r.base_pay) + parseFloat(r.ot_pay);
+      r.deduction_details = types.map((t) => {
+        const rate = parseFloat(t.rate) || 0;
+        const amt = (base * rate) / 100;
+        return { name: t.name, amount: parseFloat(amt.toFixed(2)) };
+      });
+
+      const { rows: adv } = await pool.query(
+        `SELECT COALESCE(SUM(-t.amount),0) AS total
+           FROM AdvanceTransactions t
+           JOIN AdvanceLoans a ON t.advance_id=a.id
+          WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+        [r.employee_id, r.pay_month]
+      );
+      r.advance_total = parseFloat(adv[0].total) || 0;
+
+      const { rows: sav } = await pool.query(
+        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        [r.employee_id, r.pay_month]
+      );
+      r.savings_deposit = 0;
+      r.savings_withdraw = 0;
+      if (sav.length) {
+        if (sav[0].is_deposit) r.savings_deposit = parseFloat(sav[0].amount);
+        else r.savings_withdraw = parseFloat(sav[0].amount);
+      }
+    }
+
     rows.sort((a, b) => {
       if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
       if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;
@@ -578,12 +612,51 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT h.*, e.first_name, e.last_name, e.nationality
+      `SELECT h.*, e.first_name, e.last_name, e.nationality, e.daily_wage
        FROM HalfPayrollRecords h
        JOIN Employees e ON h.employee_id = e.id
        WHERE to_char(h.pay_month, 'YYYY-MM') = $1`,
       [month]
     );
+
+    const { rows: types } = await pool.query(
+      'SELECT name, rate FROM DeductionTypes ORDER BY id'
+    );
+
+    const monthStart = new Date(`${month}-01`);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+
+    for (const r of rows) {
+      const emp = { id: r.employee_id, daily_wage: r.daily_wage };
+      const monthly = await calculateRange(emp, monthStart, monthEnd);
+      const base = monthly.basePay + monthly.otPay;
+      r.deduction_details = types.map((t) => {
+        const rate = parseFloat(t.rate) || 0;
+        const amt = (base * rate) / 100;
+        return { name: t.name, amount: parseFloat(amt.toFixed(2)) };
+      });
+
+      const { rows: adv } = await pool.query(
+        `SELECT COALESCE(SUM(-t.amount),0) AS total
+           FROM AdvanceTransactions t
+           JOIN AdvanceLoans a ON t.advance_id=a.id
+          WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+        [r.employee_id, r.pay_month]
+      );
+      r.advance_total = parseFloat(adv[0].total) || 0;
+
+      const { rows: sav } = await pool.query(
+        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        [r.employee_id, r.pay_month]
+      );
+      r.savings_deposit = 0;
+      r.savings_withdraw = 0;
+      if (sav.length) {
+        if (sav[0].is_deposit) r.savings_deposit = parseFloat(sav[0].amount);
+        else r.savings_withdraw = parseFloat(sav[0].amount);
+      }
+    }
+
     rows.sort((a, b) => {
       if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
       if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;

@@ -5,6 +5,7 @@ function PayrollHistoryPage() {
   const [cycle, setCycle] = useState('รายเดือน');
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [records, setRecords] = useState([]);
+  const [deductionTypes, setDeductionTypes] = useState([]);
   const [error, setError] = useState('');
 
   const fetchHistory = async (m, c) => {
@@ -26,6 +27,18 @@ function PayrollHistoryPage() {
     fetchHistory(month, cycle);
   }, [cycle, month]);
 
+  useEffect(() => {
+    const loadTypes = async () => {
+      try {
+        const { data } = await axios.get('/api/deductions/types');
+        setDeductionTypes(data.filter((t) => t.is_active));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadTypes();
+  }, []);
+
   const renderTable = () => (
     <table className="min-w-full bg-white shadow rounded text-sm">
       <thead className="bg-gray-100">
@@ -44,7 +57,11 @@ function PayrollHistoryPage() {
           <th className="px-2 py-2">รวมรายได้</th>
           <th className="px-2 py-2">ค่าน้ำ</th>
           <th className="px-2 py-2">ค่าไฟ</th>
-          <th className="px-2 py-2">หักอื่นๆ</th>
+          {deductionTypes.map((d) => (
+            <th key={d.id} className="px-2 py-2">{`${d.name} (${parseFloat(d.rate)}%)`}</th>
+          ))}
+          <th className="px-2 py-2">เงินเบิก</th>
+          <th className="px-2 py-2">เงินเก็บสะสม</th>
           <th className="px-2 py-2">รวมยอดหัก</th>
           <th className="px-2 py-2">รับสุทธิ</th>
         </tr>
@@ -70,7 +87,20 @@ function PayrollHistoryPage() {
             <td className="px-2 py-1 text-right">{Number(p.total_income).toFixed(2)}</td>
             <td className="px-2 py-1 text-right">{Number(p.water_deduction).toFixed(2)}</td>
             <td className="px-2 py-1 text-right">{Number(p.electric_deduction).toFixed(2)}</td>
-            <td className="px-2 py-1 text-right">{Number(p.other_deductions).toFixed(2)}</td>
+            {deductionTypes.map((d) => {
+              const detail = p.deduction_details?.find((dd) => dd.name === d.name);
+              return (
+                <td key={d.id} className="px-2 py-1 text-right">
+                  {detail ? Number(detail.amount).toFixed(2) : '0.00'}
+                </td>
+              );
+            })}
+            <td className="px-2 py-1 text-right">{Number(p.advance_total || 0).toFixed(2)}</td>
+            <td className="px-2 py-1 text-right">
+              {p.savings_deposit > 0 && `ฝาก ${Number(p.savings_deposit).toFixed(2)}`}
+              {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
+              {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
+            </td>
             <td className="px-2 py-1 text-right">{Number(p.deductions_total).toFixed(2)}</td>
             <td className="px-2 py-1 text-right">{Number(p.net_pay).toFixed(2)}</td>
           </tr>
