@@ -100,12 +100,9 @@ function PayrollHistoryPage() {
                 <div className="space-y-1">
                   {p.advance_details.map((a, idx) => (
                     <div key={idx} className="whitespace-nowrap">
-                      {`${a.name} เหลือ ${a.remaining.toFixed(2)} ${a.remark || ''}`}
+                      {`${idx + 1}. ${a.name} หักเพิ่ม ${Number(a.amount).toLocaleString()} คงเหลือ ${Number(a.remaining).toFixed(2)}`}
                     </div>
                   ))}
-                  <div className="text-right font-semibold">
-                    {Number(p.advance_total).toFixed(2)}
-                  </div>
                 </div>
               ) : (
                 Number(p.advance_total || 0).toFixed(2)
