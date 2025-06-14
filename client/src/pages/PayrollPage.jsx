@@ -19,7 +19,14 @@ function PayrollPage() {
     );
     const sav = savingInputs[p.employee_id] || {};
     const deposit = sav.withdraw ? 0 : p.savings_monthly_amount;
-    const withdrawAmt = sav.withdraw ? p.savings_balance : 0;
+    let withdrawAmt = 0;
+    if (sav.withdraw) {
+      withdrawAmt = p.savings_balance;
+      const payDate = new Date(`${month}-01`);
+      if (payDate.getMonth() === 11 && p.savings_balance >= 5500) {
+        withdrawAmt += 1375;
+      }
+    }
     return (p.net_pay - advTotal - deposit + withdrawAmt).toFixed(2);
   };
 
