@@ -40,14 +40,17 @@ function EmployeeListPage() {
     setCurrentEmployee(employee);
     if (employee) {
       const employeeDataForForm = {
-        ...initialFormData, 
-        ...employee,        
+        ...initialFormData,
+        ...employee,
         daily_wage: employee.daily_wage != null ? String(employee.daily_wage) : '',
         start_date: employee.start_date ? new Date(employee.start_date).toISOString().slice(0,10) : '',
         water_address: employee.water_address || '',
         electric_address: employee.electric_address || '',
         supervisor_admin_id: employee.supervisor_admin_id || '',
-        savings_monthly_amount: employee.savings_monthly_amount != null ? String(employee.savings_monthly_amount) : ''
+        savings_monthly_amount: employee.savings_monthly_amount != null ? String(employee.savings_monthly_amount) : '',
+        bank_name: employee.bank_name || '',
+        bank_account_number: employee.bank_account_number || '',
+        bank_account_name: employee.bank_account_name || ''
       };
       setFormData(employeeDataForForm);
     } else {

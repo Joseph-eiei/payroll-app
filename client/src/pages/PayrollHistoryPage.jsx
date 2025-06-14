@@ -70,7 +70,12 @@ function PayrollHistoryPage() {
         {records.map((p) => (
           <tr key={`${p.employee_id}-${p.period || 'm'}`} className="border-t">
             <td className="px-2 py-1 text-center">{p.employee_id}</td>
-            <td className="px-2 py-1">{`${p.first_name} ${p.last_name}`}</td>
+            <td className="px-2 py-1">
+              <div>{`${p.first_name} ${p.last_name}`}</div>
+              <div className="text-xs text-gray-500 whitespace-nowrap">
+                {p.bank_account_name || '-'} {p.bank_account_number || ''} {p.bank_name || ''}
+              </div>
+            </td>
             {cycle === 'ครึ่งเดือน' && (
               <td className="px-2 py-1 text-center">
                 {p.period === 'first' ? '1-15' : '16-สิ้นเดือน'}
