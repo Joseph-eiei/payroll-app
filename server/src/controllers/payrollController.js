@@ -19,7 +19,9 @@ async function calculateRange(emp, startDate, endDate) {
   let sunDays = 0;
 
   const { rows: att } = await pool.query(
-    `SELECT a.attendance_date, a.site_supervisor_id, a.supervisor_ot, a.is_sunday, a.is_bonus,
+    `SELECT a.attendance_date, a.site_supervisor_id, a.supervisor_ot,
+            a.supervisor_check_in, a.supervisor_check_out,
+            a.is_sunday, a.is_bonus,
             ae.check_in, ae.check_out, ae.ot_hours
        FROM AttendanceForms a
        LEFT JOIN AttendanceEmployees ae ON a.id = ae.attendance_id AND ae.employee_id=$3
@@ -32,6 +34,15 @@ async function calculateRange(emp, startDate, endDate) {
   for (const r of att) {
     if (r.check_in && r.check_out) {
       const w = calcWorkTime(r.check_in, r.check_out);
+      days += w.days;
+      hours += w.hours;
+    }
+    if (
+      r.site_supervisor_id === emp.id &&
+      r.supervisor_check_in &&
+      r.supervisor_check_out
+    ) {
+      const w = calcWorkTime(r.supervisor_check_in, r.supervisor_check_out);
       days += w.days;
       hours += w.hours;
     }
