@@ -32,26 +32,32 @@ async function calculateRange(emp, startDate, endDate) {
   );
 
   for (const r of att) {
-    if (r.check_in && r.check_out) {
-      const w = calcWorkTime(r.check_in, r.check_out);
-      days += w.days;
-      hours += w.hours;
+    const isSun = r.is_sunday === true;
+
+    if (!isSun) {
+      if (r.check_in && r.check_out) {
+        const w = calcWorkTime(r.check_in, r.check_out);
+        days += w.days;
+        hours += w.hours;
+      }
+      if (
+        r.site_supervisor_id === emp.id &&
+        r.supervisor_check_in &&
+        r.supervisor_check_out
+      ) {
+        const w = calcWorkTime(r.supervisor_check_in, r.supervisor_check_out);
+        days += w.days;
+        hours += w.hours;
+      }
     }
-    if (
-      r.site_supervisor_id === emp.id &&
-      r.supervisor_check_in &&
-      r.supervisor_check_out
-    ) {
-      const w = calcWorkTime(r.supervisor_check_in, r.supervisor_check_out);
-      days += w.days;
-      hours += w.hours;
-    }
+
     if (r.is_bonus) bonus += 1;
     if (r.ot_hours) otHours += parseFloat(r.ot_hours);
     if (r.site_supervisor_id === emp.id && r.supervisor_ot) {
       otHours += parseFloat(r.supervisor_ot);
     }
-    if (r.is_sunday) sunDays += 1;
+
+    if (isSun) sunDays += 1;
   }
 
   const daily = parseFloat(emp.daily_wage);
