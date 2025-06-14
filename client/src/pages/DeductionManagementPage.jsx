@@ -35,6 +35,8 @@ function DeductionManagementPage() {
       const eleRes = await axios.get('/api/deductions/electric');
       const electricData = eleRes.data.map((c) => ({
         ...c,
+        bill_last_image: c.bill_current_image,
+        bill_current_image: null,
         last_unit: c.current_unit,
         current_unit: '',
         bill_month: getNextMonth(c.bill_month || new Date().toISOString().slice(0, 7)),
