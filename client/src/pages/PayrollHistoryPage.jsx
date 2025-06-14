@@ -95,7 +95,22 @@ function PayrollHistoryPage() {
                 </td>
               );
             })}
-            <td className="px-2 py-1 text-right">{Number(p.advance_total || 0).toFixed(2)}</td>
+            <td className="px-2 py-1">
+              {p.advance_details && p.advance_details.length > 0 ? (
+                <div className="space-y-1">
+                  {p.advance_details.map((a, idx) => (
+                    <div key={idx} className="whitespace-nowrap">
+                      {`${a.name} เหลือ ${a.remaining.toFixed(2)} ${a.remark || ''}`}
+                    </div>
+                  ))}
+                  <div className="text-right font-semibold">
+                    {Number(p.advance_total).toFixed(2)}
+                  </div>
+                </div>
+              ) : (
+                Number(p.advance_total || 0).toFixed(2)
+              )}
+            </td>
             <td className="px-2 py-1 text-right">
               {p.savings_deposit > 0 && `ฝาก ${Number(p.savings_deposit).toFixed(2)}`}
               {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}

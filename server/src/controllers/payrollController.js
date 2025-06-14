@@ -576,13 +576,21 @@ exports.getMonthlyHistory = async (req, res) => {
       });
 
       const { rows: adv } = await pool.query(
-        `SELECT COALESCE(SUM(-t.amount),0) AS total
+        `SELECT a.name, a.total_amount, -t.amount AS amount, t.remark
            FROM AdvanceTransactions t
-           JOIN AdvanceLoans a ON t.advance_id=a.id
-          WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+           JOIN AdvanceLoans a ON t.advance_id = a.id
+          WHERE a.employee_id = $1
+            AND t.transaction_date = $2
+            AND t.amount < 0`,
         [r.employee_id, r.pay_month]
       );
-      r.advance_total = parseFloat(adv[0].total) || 0;
+      r.advance_details = adv.map((a) => ({
+        name: a.name,
+        remaining: parseFloat(a.total_amount),
+        amount: parseFloat(a.amount),
+        remark: a.remark || '',
+      }));
+      r.advance_total = r.advance_details.reduce((sum, a) => sum + a.amount, 0);
 
       const { rows: sav } = await pool.query(
         'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
@@ -637,13 +645,21 @@ exports.getSemiMonthlyHistory = async (req, res) => {
       });
 
       const { rows: adv } = await pool.query(
-        `SELECT COALESCE(SUM(-t.amount),0) AS total
+        `SELECT a.name, a.total_amount, -t.amount AS amount, t.remark
            FROM AdvanceTransactions t
-           JOIN AdvanceLoans a ON t.advance_id=a.id
-          WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+           JOIN AdvanceLoans a ON t.advance_id = a.id
+          WHERE a.employee_id = $1
+            AND t.transaction_date = $2
+            AND t.amount < 0`,
         [r.employee_id, r.pay_month]
       );
-      r.advance_total = parseFloat(adv[0].total) || 0;
+      r.advance_details = adv.map((a) => ({
+        name: a.name,
+        remaining: parseFloat(a.total_amount),
+        amount: parseFloat(a.amount),
+        remark: a.remark || '',
+      }));
+      r.advance_total = r.advance_details.reduce((sum, a) => sum + a.amount, 0);
 
       const { rows: sav } = await pool.query(
         'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
