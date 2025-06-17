@@ -114,6 +114,21 @@ async function calcElectricDed(emp, month) {
   return people > 0 ? charge / people : 0;
 }
 
+function computePayrollValues(daily, days, hours, bonus, otHours, sunDays) {
+  const basePay = days * daily + hours * (daily / 8) + bonus * 50;
+  const otRate = (daily / 8) * 1.5;
+  const otPay = otHours * otRate;
+  const sunRate = daily * 1.5;
+  const sunPay = sunDays * sunRate;
+  const totalIncome = basePay + otPay + sunPay;
+  return {
+    basePay: parseFloat(basePay.toFixed(2)),
+    otPay: parseFloat(otPay.toFixed(2)),
+    sunPay: parseFloat(sunPay.toFixed(2)),
+    totalIncome: parseFloat(totalIncome.toFixed(2)),
+  };
+}
+
 exports.getMonthlyPayroll = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   const monthStart = new Date(`${month}-01`);
@@ -552,7 +567,7 @@ exports.getMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, e.first_name, e.last_name, e.nationality,
+      `SELECT p.*, e.first_name, e.last_name, e.nationality, e.daily_wage,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM PayrollRecords p
        JOIN Employees e ON p.employee_id = e.id
@@ -573,7 +588,8 @@ exports.getMonthlyHistory = async (req, res) => {
       });
 
       const { rows: adv } = await pool.query(
-        `SELECT a.name, a.total_amount, -t.amount AS amount, t.remark
+        `SELECT a.id AS advance_id, t.id AS tx_id, a.name, a.total_amount,
+                -t.amount AS amount, t.remark
            FROM AdvanceTransactions t
            JOIN AdvanceLoans a ON t.advance_id = a.id
           WHERE a.employee_id = $1
@@ -582,6 +598,8 @@ exports.getMonthlyHistory = async (req, res) => {
         [r.employee_id, r.pay_month]
       );
       r.advance_details = adv.map((a) => ({
+        advance_id: a.advance_id,
+        tx_id: a.tx_id,
         name: a.name,
         remaining: parseFloat(a.total_amount),
         amount: parseFloat(a.amount),
@@ -643,7 +661,8 @@ exports.getSemiMonthlyHistory = async (req, res) => {
       });
 
       const { rows: adv } = await pool.query(
-        `SELECT a.name, a.total_amount, -t.amount AS amount, t.remark
+        `SELECT a.id AS advance_id, t.id AS tx_id, a.name, a.total_amount,
+                -t.amount AS amount, t.remark
            FROM AdvanceTransactions t
            JOIN AdvanceLoans a ON t.advance_id = a.id
           WHERE a.employee_id = $1
@@ -652,6 +671,8 @@ exports.getSemiMonthlyHistory = async (req, res) => {
         [r.employee_id, r.pay_month]
       );
       r.advance_details = adv.map((a) => ({
+        advance_id: a.advance_id,
+        tx_id: a.tx_id,
         name: a.name,
         remaining: parseFloat(a.total_amount),
         amount: parseFloat(a.amount),
@@ -683,5 +704,343 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   } catch (err) {
     console.error('Error in getSemiMonthlyHistory:', err.message);
     res.status(500).send('Server error while fetching semimonthly history');
+  }
+};
+
+exports.updateMonthlyRecord = async (req, res) => {
+  const { id } = req.params;
+  const {
+    days_worked = 0,
+    hours_worked = 0,
+    bonus_count = 0,
+    ot_hours = 0,
+    sunday_days = 0,
+    advance_updates = [],
+    savings_deposit = 0,
+    savings_withdraw = 0,
+  } = req.body;
+
+  try {
+    await pool.query('BEGIN');
+    const { rows } = await pool.query(
+      `SELECT p.*, e.daily_wage FROM PayrollRecords p
+       JOIN Employees e ON p.employee_id=e.id WHERE p.id=$1`,
+      [id]
+    );
+    if (!rows.length) {
+      await pool.query('ROLLBACK');
+      return res.status(404).json({ msg: 'record not found' });
+    }
+    const r = rows[0];
+
+    const { rows: advRows } = await pool.query(
+      `SELECT t.id, t.advance_id, -t.amount AS amount
+         FROM AdvanceTransactions t
+         JOIN AdvanceLoans a ON t.advance_id=a.id
+        WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+      [r.employee_id, r.pay_month]
+    );
+    for (const a of advRows) {
+      const upd = advance_updates.find((u) => parseInt(u.tx_id) === a.id);
+      if (upd) {
+        const newAmt = parseFloat(upd.amount) || 0;
+        const oldAmt = parseFloat(a.amount);
+        if (newAmt !== oldAmt) {
+          const diff = oldAmt - newAmt;
+          await pool.query(
+            'UPDATE AdvanceLoans SET total_amount = total_amount + $1, updated_at=$3 WHERE id=$2',
+            [diff, a.advance_id, r.pay_month]
+          );
+          await pool.query('UPDATE AdvanceTransactions SET amount=$1 WHERE id=$2', [
+            -newAmt,
+            a.id,
+          ]);
+        }
+      }
+    }
+
+    const { rows: savRows } = await pool.query(
+      'SELECT id, amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      [r.employee_id, r.pay_month]
+    );
+    const dep = parseFloat(savings_deposit) || 0;
+    const wit = parseFloat(savings_withdraw) || 0;
+    if (savRows.length) {
+      const sav = savRows[0];
+      if (dep === 0 && wit === 0) {
+        await pool.query('DELETE FROM SavingsTransactions WHERE id=$1', [sav.id]);
+      } else {
+        await pool.query(
+          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2 WHERE id=$3',
+          [dep || wit, dep > 0, sav.id]
+        );
+      }
+    } else if (dep > 0 || wit > 0) {
+      await pool.query(
+        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit) VALUES ($1,$2,$3,$4)',
+        [r.employee_id, dep || wit, r.pay_month, dep > 0]
+      );
+    }
+
+    const nums = {
+      days: parseFloat(days_worked) || 0,
+      hours: parseFloat(hours_worked) || 0,
+      bonus: parseInt(bonus_count, 10) || 0,
+      ot: parseFloat(ot_hours) || 0,
+      sun: parseFloat(sunday_days) || 0,
+    };
+
+    const computed = computePayrollValues(
+      parseFloat(r.daily_wage),
+      nums.days,
+      nums.hours,
+      nums.bonus,
+      nums.ot,
+      nums.sun,
+    );
+
+    const { rows: types } = await pool.query(
+      'SELECT rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
+    );
+    let otherDed = 0;
+    for (const d of types) {
+      const rate = parseFloat(d.rate) || 0;
+      otherDed += ((computed.basePay + computed.otPay) * rate) / 100;
+    }
+
+    const { rows: adv } = await pool.query(
+      `SELECT -t.amount AS amount
+         FROM AdvanceTransactions t
+         JOIN AdvanceLoans a ON t.advance_id=a.id
+        WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+      [r.employee_id, r.pay_month]
+    );
+    const advTotal = adv.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+    const { rows: sav } = await pool.query(
+      'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      [r.employee_id, r.pay_month]
+    );
+    let savingsIncome = 0;
+    let savingsDed = 0;
+    if (sav.length) {
+      if (sav[0].is_deposit) savingsDed = parseFloat(sav[0].amount);
+      else savingsIncome = parseFloat(sav[0].amount);
+    }
+
+    otherDed += advTotal + savingsDed;
+
+    const totalIncome = computed.totalIncome + savingsIncome;
+    const deductionsTotal =
+      parseFloat(r.water_deduction) +
+      parseFloat(r.electric_deduction) +
+      otherDed;
+    const netPay = totalIncome - deductionsTotal;
+
+    const { rows: updated } = await pool.query(
+      `UPDATE PayrollRecords
+       SET days_worked=$1, hours_worked=$2, bonus_count=$3,
+           ot_hours=$4, sunday_days=$5, base_pay=$6, ot_pay=$7,
+           sunday_pay=$8, other_deductions=$9, deductions_total=$10,
+           total_income=$11, net_pay=$12
+       WHERE id=$13 RETURNING *`,
+      [
+        nums.days,
+        nums.hours,
+        nums.bonus,
+        nums.ot,
+        nums.sun,
+        computed.basePay,
+        computed.otPay,
+        computed.sunPay,
+        parseFloat(otherDed.toFixed(2)),
+        parseFloat(deductionsTotal.toFixed(2)),
+        parseFloat(totalIncome.toFixed(2)),
+        parseFloat(netPay.toFixed(2)),
+        id,
+      ]
+    );
+    await pool.query('COMMIT');
+    res.json(updated[0]);
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    console.error('Error in updateMonthlyRecord:', err.message);
+    res.status(500).send('Server error while updating payroll record');
+  }
+};
+
+exports.updateSemiMonthlyRecord = async (req, res) => {
+  const { id } = req.params;
+  const {
+    days_worked = 0,
+    hours_worked = 0,
+    bonus_count = 0,
+    ot_hours = 0,
+    sunday_days = 0,
+    advance_updates = [],
+    savings_deposit = 0,
+    savings_withdraw = 0,
+  } = req.body;
+
+  try {
+    await pool.query('BEGIN');
+    const { rows } = await pool.query(
+      `SELECT h.*, e.daily_wage FROM HalfPayrollRecords h
+       JOIN Employees e ON h.employee_id=e.id WHERE h.id=$1`,
+      [id]
+    );
+    if (!rows.length) {
+      await pool.query('ROLLBACK');
+      return res.status(404).json({ msg: 'record not found' });
+    }
+    const r = rows[0];
+
+    const { rows: advRows } = await pool.query(
+      `SELECT t.id, t.advance_id, -t.amount AS amount
+         FROM AdvanceTransactions t
+         JOIN AdvanceLoans a ON t.advance_id=a.id
+        WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+      [r.employee_id, r.pay_month]
+    );
+    for (const a of advRows) {
+      const upd = advance_updates.find((u) => parseInt(u.tx_id) === a.id);
+      if (upd) {
+        const newAmt = parseFloat(upd.amount) || 0;
+        const oldAmt = parseFloat(a.amount);
+        if (newAmt !== oldAmt) {
+          const diff = oldAmt - newAmt;
+          await pool.query(
+            'UPDATE AdvanceLoans SET total_amount = total_amount + $1, updated_at=$3 WHERE id=$2',
+            [diff, a.advance_id, r.pay_month]
+          );
+          await pool.query('UPDATE AdvanceTransactions SET amount=$1 WHERE id=$2', [
+            -newAmt,
+            a.id,
+          ]);
+        }
+      }
+    }
+
+    const { rows: savRows } = await pool.query(
+      'SELECT id, amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      [r.employee_id, r.pay_month]
+    );
+    const dep = parseFloat(savings_deposit) || 0;
+    const wit = parseFloat(savings_withdraw) || 0;
+    if (savRows.length) {
+      const sav = savRows[0];
+      if (dep === 0 && wit === 0) {
+        await pool.query('DELETE FROM SavingsTransactions WHERE id=$1', [sav.id]);
+      } else {
+        await pool.query(
+          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2 WHERE id=$3',
+          [dep || wit, dep > 0, sav.id]
+        );
+      }
+    } else if (dep > 0 || wit > 0) {
+      await pool.query(
+        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit) VALUES ($1,$2,$3,$4)',
+        [r.employee_id, dep || wit, r.pay_month, dep > 0]
+      );
+    }
+
+    const nums = {
+      days: parseFloat(days_worked) || 0,
+      hours: parseFloat(hours_worked) || 0,
+      bonus: parseInt(bonus_count, 10) || 0,
+      ot: parseFloat(ot_hours) || 0,
+      sun: parseFloat(sunday_days) || 0,
+    };
+
+    const computed = computePayrollValues(
+      parseFloat(r.daily_wage),
+      nums.days,
+      nums.hours,
+      nums.bonus,
+      nums.ot,
+      nums.sun,
+    );
+
+    const payMonth = r.pay_month.toISOString().slice(0, 7);
+    const { rows: others } = await pool.query(
+      `SELECT id, base_pay, ot_pay FROM HalfPayrollRecords
+       WHERE employee_id=$1 AND to_char(pay_month,'YYYY-MM')=$2 AND id<>$3`,
+      [r.employee_id, payMonth, id]
+    );
+    let monthlyBaseOt = computed.basePay + computed.otPay;
+    if (others.length) {
+      monthlyBaseOt +=
+        parseFloat(others[0].base_pay) + parseFloat(others[0].ot_pay);
+    }
+
+    const { rows: types } = await pool.query(
+      'SELECT rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
+    );
+    let otherDed = 0;
+    for (const d of types) {
+      const rate = parseFloat(d.rate) || 0;
+      otherDed += (monthlyBaseOt * rate) / 100;
+    }
+
+    const { rows: adv } = await pool.query(
+      `SELECT -t.amount AS amount
+         FROM AdvanceTransactions t
+         JOIN AdvanceLoans a ON t.advance_id=a.id
+        WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+      [r.employee_id, r.pay_month]
+    );
+    const advTotal = adv.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+    const { rows: sav } = await pool.query(
+      'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      [r.employee_id, r.pay_month]
+    );
+    let savingsIncome = 0;
+    let savingsDed = 0;
+    if (sav.length) {
+      if (sav[0].is_deposit) savingsDed = parseFloat(sav[0].amount);
+      else savingsIncome = parseFloat(sav[0].amount);
+    }
+
+    otherDed += advTotal + savingsDed;
+
+    const totalIncome = computed.totalIncome + savingsIncome;
+    const deductionsTotal =
+      r.period === 'second'
+        ? parseFloat(r.water_deduction) +
+          parseFloat(r.electric_deduction) +
+          otherDed
+        : 0;
+    const netPay = totalIncome - deductionsTotal;
+
+    const { rows: updated } = await pool.query(
+      `UPDATE HalfPayrollRecords
+       SET days_worked=$1, hours_worked=$2, bonus_count=$3,
+           ot_hours=$4, sunday_days=$5, base_pay=$6, ot_pay=$7,
+           sunday_pay=$8, other_deductions=$9, deductions_total=$10,
+           total_income=$11, net_pay=$12
+       WHERE id=$13 RETURNING *`,
+      [
+        nums.days,
+        nums.hours,
+        nums.bonus,
+        nums.ot,
+        nums.sun,
+        computed.basePay,
+        computed.otPay,
+        computed.sunPay,
+        parseFloat(otherDed.toFixed(2)),
+        parseFloat(deductionsTotal.toFixed(2)),
+        parseFloat(totalIncome.toFixed(2)),
+        parseFloat(netPay.toFixed(2)),
+        id,
+      ]
+    );
+    await pool.query('COMMIT');
+    res.json(updated[0]);
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    console.error('Error in updateSemiMonthlyRecord:', err.message);
+    res.status(500).send('Server error while updating payroll record');
   }
 };
