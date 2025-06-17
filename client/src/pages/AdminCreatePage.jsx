@@ -105,7 +105,7 @@ function AdminCreatePage() {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-sky-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white"
             >
               {showPassword ? 'ซ่อน' : 'แสดง'}
             </button>
@@ -125,7 +125,7 @@ function AdminCreatePage() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-sky-600"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-white"
             >
               {showConfirmPassword ? 'ซ่อน' : 'แสดง'}
             </button>

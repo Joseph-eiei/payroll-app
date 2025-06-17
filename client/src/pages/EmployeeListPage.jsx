@@ -24,12 +24,12 @@ function EmployeeListPage() {
   };
 
   const initialFormData = {
-    employee_code: '', first_name: '', last_name: '', nickname: '',
+    first_name: '', last_name: '', nickname: '',
     thai_id_number: '', daily_wage: '', nationality: 'ไทย',
     water_address: '', electric_address: '', payment_cycle: 'รายเดือน',
     employee_role: 'พนักงาน', bank_name: '', bank_account_number: '',
     bank_account_name: '', start_date: '', status: 'active',
-    phone_number: '', email: '', address: '',
+    phone_number: '', email: '', 
     savings_monthly_amount: '',
     supervisor_admin_id: ''
   };
@@ -239,8 +239,8 @@ function EmployeeListPage() {
                         </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button onClick={() => handleOpenModal(emp)} className="text-sky-600 hover:text-sky-800 transition-colors">แก้ไข</button>
-                        <button onClick={() => handleDeleteEmployee(emp.id)} className="text-red-600 hover:text-red-800 transition-colors">ลบ</button>
+                        <button onClick={() => handleOpenModal(emp)} className="hover:text-gray-300 transition-colors">แก้ไข</button>
+                        <button onClick={() => handleDeleteEmployee(emp.id)} className="text-red-400 hover:text-red-600 transition-colors">ลบ</button>
                     </td>
                     </tr>
                 ))
@@ -274,10 +274,6 @@ function EmployeeListPage() {
                   <div>
                     <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">ชื่อเล่น</label>
                     <input type="text" name="nickname" id="nickname" value={formData.nickname} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
-                  </div>
-                   <div>
-                    <label htmlFor="employee_code" className="block text-sm font-medium text-gray-700">รหัสพนักงาน</label>
-                    <input type="text" name="employee_code" id="employee_code" value={formData.employee_code} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
                   </div>
                   <div>
                     <label htmlFor="daily_wage" className="block text-sm font-medium text-gray-700">ค่าแรง/วัน (บาท) <span className="text-red-500">*</span></label>
@@ -360,23 +356,6 @@ function EmployeeListPage() {
                         ))}
                     </select>
                   </div>
-                  <div className="md:col-span-2"><hr className="my-2"/> <p className="text-sm text-gray-600">ข้อมูลติดต่อ (ไม่บังคับ)</p></div>
-                   <div>
-                    <label htmlFor="thai_id_number" className="block text-sm font-medium text-gray-700">เลขบัตรประชาชน (13 หลัก)</label>
-                    <input type="text" name="thai_id_number" id="thai_id_number" value={formData.thai_id_number} onChange={handleFormChange} maxLength="13" className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
-                  </div>
-                  <div>
-                    <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
-                    <input type="tel" name="phone_number" id="phone_number" value={formData.phone_number} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">อีเมล</label>
-                    <input type="email" name="email" id="email" value={formData.email} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
-                  </div>
-                  <div className="md:col-span-2">
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700">ที่อยู่</label>
-                      <textarea name="address" id="address" value={formData.address} onChange={handleFormChange} rows="2" className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2"></textarea>
-                  </div>
                    <div className="md:col-span-2"><hr className="my-2"/> <p className="text-sm text-gray-600">ข้อมูลธนาคาร (สำหรับจ่ายเงินเดือน)</p></div>
                    <div>
                     <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700">ชื่อธนาคาร</label>
@@ -390,10 +369,23 @@ function EmployeeListPage() {
                     <label htmlFor="bank_account_name" className="block text-sm font-medium text-gray-700">ชื่อบัญชี</label>
                     <input type="text" name="bank_account_name" id="bank_account_name" value={formData.bank_account_name} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
                   </div>
+                  <div className="md:col-span-2"><hr className="my-2"/> <p className="text-sm text-gray-600">ข้อมูลติดต่อ (ไม่บังคับ)</p></div>
+                   <div>
+                    <label htmlFor="thai_id_number" className="block text-sm font-medium text-gray-700">เลขบัตรประชาชน (13 หลัก)</label>
+                    <input type="text" name="thai_id_number" id="thai_id_number" value={formData.thai_id_number} onChange={handleFormChange} maxLength="13" className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
+                  </div>
+                  <div>
+                    <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
+                    <input type="tel" name="phone_number" id="phone_number" value={formData.phone_number} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">อีเมล</label>
+                    <input type="email" name="email" id="email" value={formData.email} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
+                  </div>
                 </div>
                 <div className="pt-5 sticky bottom-0 bg-white py-3 px-6 border-t border-gray-200 z-10">
                   <div className="flex justify-end space-x-3">
-                    <button type="button" onClick={handleCloseModal} className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm">ยกเลิก</button>
+                    <button type="button" onClick={handleCloseModal} className="bg-gray-200 hover:bg-gray-300 text-red-400 font-semibold py-2 px-4 rounded-lg shadow-sm">ยกเลิก</button>
                     <button type="submit" className="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm">
                       {currentEmployee ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มพนักงาน'}
                     </button>

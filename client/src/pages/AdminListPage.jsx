@@ -116,7 +116,7 @@ function AdminListPage() {
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{admin.email}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                   {showPasswords[admin.id] ? admin.password_hash : '********'}
-                  <button onClick={() => togglePassword(admin.id)} className="text-sky-600 text-sm" style={{ marginLeft: '8px' }}>
+                  <button onClick={() => togglePassword(admin.id)} className="text-white text-sm" style={{ marginLeft: '8px' }}>
                     {showPasswords[admin.id] ? 'ซ่อน' : 'แสดง'}
                   </button>
                 </td>
@@ -124,8 +124,8 @@ function AdminListPage() {
                   {admin.is_superuser ? 'ใช่' : 'ไม่'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button onClick={() => openModal(admin)} className="text-sky-600">แก้ไข</button>
-                  <button onClick={() => handleDelete(admin.id)} className="text-red-600">ลบ</button>
+                  <button onClick={() => openModal(admin)} className="text-white">แก้ไข</button>
+                  <button onClick={() => handleDelete(admin.id)} className="text-red-400">ลบ</button>
                 </td>
               </tr>
             ))}

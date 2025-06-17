@@ -30,7 +30,7 @@ const AdminNavbar = ({ adminUser, onLogout }) => {
           </button>
         </div>
 
-        <div className={`${menuOpen ? 'flex' : 'hidden'} flex-col sm:flex-row flex-wrap items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto mt-2 sm:mt-0`}>
+        <div className={`${menuOpen ? 'flex' : 'hidden'} mt-8 flex-col sm:flex-row flex-wrap items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto mt-2 sm:mt-0`}>
           <Link to="/" className="hover:text-green-500 transition duration-200">หน้าลงเวลา</Link>
           <Link to="/admin/employees" className="hover:text-green-500 transition duration-200">รายชื่อพนักงาน</Link>
           <Link to="/admin/attendance-review" className="hover:text-green-500 transition duration-200">ตรวจสอบการลงชื่อ</Link>
