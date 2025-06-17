@@ -39,18 +39,21 @@ exports.getEmployeesByRole = async (req, res) => {
     }
 
     try {
-        const adminId = req.admin.id;
-        const superuser = await isSuperuser(adminId);
+        const params = [role];
 
         let query = `
             SELECT e.*, a.name AS supervisor_name
             FROM Employees e
             LEFT JOIN Admins a ON e.supervisor_admin_id = a.id
             WHERE e.employee_role = $1`;
-        const params = [role];
-        if (!superuser) {
-            query += ' AND e.supervisor_admin_id = $2';
-            params.push(adminId);
+        
+        if (req.admin) {
+            const adminId = req.admin.id;
+            const superuser = await isSuperuser(adminId);
+            if (!superuser) {
+                query += ' AND e.supervisor_admin_id = $2';
+                params.push(adminId);
+            }
         }
         query += ' ORDER BY e.created_at DESC';
 
