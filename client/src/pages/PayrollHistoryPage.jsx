@@ -286,45 +286,49 @@ function PayrollHistoryPage() {
                     })}
                     <td className="px-2 py-1 text-center">
                       {isEdit ? (
-                        <div className="space-y-1">
-                          {editInputs.advance_details.length > 0 ? (
-                            editInputs.advance_details.map((a, idx) => (
-                              <div key={a.tx_id} className="flex items-center space-x-1">
-                                <span className="whitespace-nowrap">{a.name}</span>
-                                <input
-                                  type="number"
-                                  className="border w-16 p-1"
-                                  value={a.amount}
-                                  onChange={(e) => {
-                                    const list = [...editInputs.advance_details];
-                                    list[idx].amount = e.target.value;
-                                    setEditInputs({ ...editInputs, advance_details: list });
-                                  }}
-                                />
-                                <input
-                                  type="text"
-                                  className="border p-1"
-                                  value={a.remark || ''}
-                                  onChange={(e) => {
-                                    const list = [...editInputs.advance_details];
-                                    list[idx].remark = e.target.value;
-                                    setEditInputs({ ...editInputs, advance_details: list });
-                                  }}
-                                />
-                                <span className="text-xs text-gray-500 whitespace-nowrap">
-                                  คงเหลือ {Number(a.remaining).toFixed(2)}
-                                </span>
-                              </div>
-                            ))
-                          ) : (
-                            <input
-                              type="number"
-                              className="border w-20 p-1"
-                              value={editInputs.advance_total || 0}
-                              onChange={(e) => setEditInputs({ ...editInputs, advance_total: e.target.value })}
-                            />
-                          )}
-                        </div>
+                        p.advance_details?.length > 0 || p.advance_total > 0 ? (
+                          <div className="space-y-1">
+                            {editInputs.advance_details.length > 0 ? (
+                              editInputs.advance_details.map((a, idx) => (
+                                <div key={a.tx_id} className="flex items-center space-x-1">
+                                  <span className="whitespace-nowrap">{a.name}</span>
+                                  <input
+                                    type="number"
+                                    className="border w-16 p-1"
+                                    value={a.amount}
+                                    onChange={(e) => {
+                                      const list = [...editInputs.advance_details];
+                                      list[idx].amount = e.target.value;
+                                      setEditInputs({ ...editInputs, advance_details: list });
+                                    }}
+                                  />
+                                  <input
+                                    type="text"
+                                    className="border p-1"
+                                    value={a.remark || ''}
+                                    onChange={(e) => {
+                                      const list = [...editInputs.advance_details];
+                                      list[idx].remark = e.target.value;
+                                      setEditInputs({ ...editInputs, advance_details: list });
+                                    }}
+                                  />
+                                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                                    คงเหลือ {Number(a.remaining).toFixed(2)}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <input
+                                type="number"
+                                className="border w-20 p-1"
+                                value={editInputs.advance_total || 0}
+                                onChange={(e) => setEditInputs({ ...editInputs, advance_total: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          '-'
+                        )
                       ) : p.advance_details && p.advance_details.length > 0 ? (
                         <div className="space-y-1">
                           {p.advance_details.map((a, idx) => (
@@ -334,8 +338,10 @@ function PayrollHistoryPage() {
                             </div>
                           ))}
                         </div>
+                      ) : p.advance_total > 0 ? (
+                        Number(p.advance_total).toFixed(2)
                       ) : (
-                        Number(p.advance_total || 0).toFixed(2)
+                        '-'
                       )}
                     </td>
                     <td className="px-2 py-1 text-center">
