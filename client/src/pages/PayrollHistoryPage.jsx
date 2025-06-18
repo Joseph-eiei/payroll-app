@@ -127,16 +127,16 @@ function PayrollHistoryPage() {
     <tr className="bg-gray-100">
       <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
       <th className="px-2 py-2">ค่าแรง/วัน</th>
-      <th className="px-2 py-2">วันทำงาน</th>
+      <th className="px-2 py-2">วัน</th>
       <th className="px-2 py-2">ชั่วโมง</th>
       <th className="px-2 py-2">เบี้ยขยัน</th>
       <th className="px-2 py-2">ค่าแรงรวม</th>
       <th className="px-2 py-2">OT/ชม.</th>
-      <th className="px-2 py-2">OT(ชม.)</th>
+      <th className="px-2 py-2">ชม. OT</th>
       <th className="px-2 py-2">ค่า OT</th>
-      <th className="px-2 py-2">ค่าแรงวันอาทิตย์</th>
+      <th className="px-2 py-2">ค่าแรง/วันอาทิตย์</th>
       <th className="px-2 py-2">อาทิตย์(วัน)</th>
-      <th className="px-2 py-2">ค่าอาทิตย์</th>
+      <th className="px-2 py-2">ค่าแรงวันอาทิตย์</th>
       <th className="px-2 py-2">รวมรายได้</th>
       <th colSpan={10} />
     </tr>
