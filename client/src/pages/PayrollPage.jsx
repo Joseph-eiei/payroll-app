@@ -117,8 +117,22 @@ function PayrollPage() {
     <table className="min-w-full bg-white shadow rounded text-sm">
       <thead className="bg-gray-100">
         <tr>
-          <th className="px-2 py-2">รหัส</th>
-          <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+          <th rowSpan="2" className="px-2 py-2">รหัส</th>
+          <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+          <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
+          {showDeduction && (
+            <th
+              colSpan={5 + deductionTypes.length}
+              className="px-2 py-2 text-center"
+            >
+              รายหัก
+            </th>
+          )}
+          {!showDeduction && <th rowSpan="2" className="px-2 py-2">รายหัก</th>}
+          <th rowSpan="2" className="px-2 py-2">รับสุทธิ</th>
+          <th rowSpan="2" className="px-2 py-2" />
+        </tr>
+        <tr>
           <th className="px-2 py-2">วันทำงาน</th>
           <th className="px-2 py-2">ชั่วโมง</th>
           <th className="px-2 py-2">เบี้ยขยัน</th>
@@ -139,8 +153,6 @@ function PayrollPage() {
           {showDeduction && <th className="px-2 py-2">เงินเบิก</th>}
           {showDeduction && <th className="px-2 py-2">เงินเก็บสะสม</th>}
           {showDeduction && <th className="px-2 py-2">รวมยอดหัก</th>}
-          <th className="px-2 py-2">รับสุทธิ</th>
-          <th className="px-2 py-2" />
         </tr>
       </thead>
       <tbody>
