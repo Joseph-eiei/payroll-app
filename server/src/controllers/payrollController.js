@@ -980,7 +980,9 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
       nums.sun,
     );
 
-    const payMonth = r.pay_month.toISOString().slice(0, 7);
+    const payMonth = (
+      r.pay_month instanceof Date ? r.pay_month : new Date(r.pay_month)
+    ).toISOString().slice(0, 7);
     const { rows: others } = await pool.query(
       `SELECT id, base_pay, ot_pay FROM HalfPayrollRecords
        WHERE employee_id=$1 AND to_char(pay_month,'YYYY-MM')=$2 AND id<>$3`,

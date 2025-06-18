@@ -53,7 +53,7 @@ function PayrollHistoryPage() {
     loadTypes();
   }, []);
 
-  const computeValues = (rec, inputs) => {
+  const computeValues = (rec, inputs, includeDeduction = true) => {
     const days = parseFloat(inputs.days_worked) || 0;
     const hours = parseFloat(inputs.hours_worked) || 0;
     const bonus = parseFloat(inputs.bonus_count) || 0;
@@ -88,7 +88,7 @@ function PayrollHistoryPage() {
       (parseFloat(rec.water_deduction) || 0) +
       (parseFloat(rec.electric_deduction) || 0) +
       otherDed;
-    const netPay = totalIncome - deductionsTotal;
+    const netPay = totalIncome - (includeDeduction ? deductionsTotal : 0);
     const details = deductionTypes.map((d) => ({
       name: d.name,
       amount: ((basePay + otPay) * (parseFloat(d.rate) || 0)) / 100,
@@ -164,7 +164,7 @@ function PayrollHistoryPage() {
         {data.map((p) => {
           const key = `${p.employee_id}-${p.period || 'm'}`;
           const isEdit = editingKey === key;
-          const vals = isEdit ? computeValues(p, editInputs) : {};
+          const vals = isEdit ? computeValues(p, editInputs, showDeduction) : {};
           return (
             <React.Fragment key={key}>
               {renderIncomeHeader()}
@@ -387,7 +387,7 @@ function PayrollHistoryPage() {
                       </button>
                       <button
                         onClick={() => setEditingKey(null)}
-                        className="bg-gray-300 px-2 py-1 rounded"
+                        className="bg-gray-300 px-2 py-1 rounded text-red-500"
                       >
                         ยกเลิก
                       </button>
