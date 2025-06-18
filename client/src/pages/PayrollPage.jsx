@@ -176,8 +176,15 @@ function PayrollPage() {
         `}
       </style>
       <tbody className="payroll-bordered">
-        {data.map((p) => (
+        {data.map((p, idx) => (
           <React.Fragment key={p.employee_id}>
+            {(idx === 0 || p.nationality !== data[idx - 1].nationality) && (
+              <tr className="bg-blue-100">
+                <td colSpan={100} className="px-2 py-1 font-semibold text-left">
+                  {p.nationality === 'ไทย' ? 'คนไทย' : 'ต่างชาติ'}
+                </td>
+              </tr>
+            )}
             {renderIncomeHeader()}
             <tr className={`border-t ${fixedRowClass}`}>
               <td rowSpan="5" className="px-2 py-1">
