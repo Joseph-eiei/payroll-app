@@ -184,7 +184,10 @@ exports.getMonthlyPayroll = async (req, res) => {
 
       result.push({
         employee_id: emp.id,
-        name: `${emp.first_name} ${emp.last_name}`,
+        first_name: emp.first_name,
+        last_name: emp.last_name,
+        nickname: emp.nickname,
+        name: `${emp.first_name} ${emp.last_name}${emp.nickname ? `(${emp.nickname})` : ''}`,
         nationality: emp.nationality,
         days_worked: details.days,
         hours_worked: details.hours,
@@ -273,7 +276,10 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
 
       result.push({
         employee_id: emp.id,
-        name: `${emp.first_name} ${emp.last_name}`,
+        first_name: emp.first_name,
+        last_name: emp.last_name,
+        nickname: emp.nickname,
+        name: `${emp.first_name} ${emp.last_name}${emp.nickname ? `(${emp.nickname})` : ''}`,
         nationality: emp.nationality,
         period,
         days_worked: part.days,
@@ -570,7 +576,7 @@ exports.getMonthlyHistory = async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT p.*, COALESCE(p.daily_wage, e.daily_wage) AS daily_wage,
-              e.first_name, e.last_name, e.nationality,
+              e.first_name, e.last_name, e.nickname, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM PayrollRecords p
        JOIN Employees e ON p.employee_id = e.id
@@ -639,7 +645,7 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT h.*, COALESCE(h.daily_wage, e.daily_wage) AS daily_wage,
-              e.first_name, e.last_name, e.nationality,
+              e.first_name, e.last_name, e.nickname, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM HalfPayrollRecords h
        JOIN Employees e ON h.employee_id = e.id

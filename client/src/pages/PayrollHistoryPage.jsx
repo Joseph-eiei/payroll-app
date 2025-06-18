@@ -158,7 +158,7 @@ function PayrollHistoryPage() {
               <tr className="border-t">
                 <td rowSpan="5" className="px-2 py-1 text-center">{p.employee_id}</td>
                 <td rowSpan="5" className="px-2 py-1">
-                  <div>{`${p.first_name} ${p.last_name}`}</div>
+                  <div>{`${p.first_name} ${p.last_name}${p.nickname ? `(${p.nickname})` : ''}`}</div>
                   <div className="text-xs text-gray-500 whitespace-nowrap">
                     {p.bank_account_name || '-'} {p.bank_account_number || ''} {p.bank_name || ''}
                   </div>

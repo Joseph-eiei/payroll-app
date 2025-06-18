@@ -116,7 +116,7 @@ function PayrollPage() {
     }
   };
 
-  const renderIncomeHeader = (showDeduction) => (
+  const renderIncomeHeader = () => (
     <tr className="bg-gray-100">
       <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
       <th className="px-2 py-2">วันทำงาน</th>
@@ -152,7 +152,7 @@ function PayrollPage() {
     </tr>
   );
 
-  const renderNetHeader = (showDeduction) => (
+  const renderNetHeader = () => (
     <tr className="bg-gray-100">
       <th className="px-2 py-2">รับสุทธิ</th>
       <th colSpan={20} />
@@ -175,9 +175,11 @@ function PayrollPage() {
       <tbody className="payroll-bordered">
         {data.map((p) => (
           <React.Fragment key={p.employee_id}>
-            {renderIncomeHeader(showDeduction)}
+            {renderIncomeHeader()}
             <tr className={`border-t ${fixedRowClass}`}>
-              <td rowSpan="5" className="px-2 py-1">{p.name}</td>
+              <td rowSpan="5" className="px-2 py-1">
+                {`${p.first_name} ${p.last_name}${p.nickname ? `(${p.nickname})` : ''}`}
+              </td>
               <td className="px-2 py-1 text-center">{p.days_worked}</td>
               <td className="px-2 py-1 text-center">{p.hours_worked}</td>
               <td className="px-2 py-1 text-center">{p.bonus_count}</td>
@@ -301,7 +303,7 @@ function PayrollPage() {
                 </tr>
               )}
             
-            {renderNetHeader(showDeduction)}
+            {renderNetHeader()}
             <tr className={fixedRowClass}>
               <td className="px-2 py-1 text-center font-bold">{computeNetPay(p)}</td>
               <td className="px-2 py-1 text-center">
