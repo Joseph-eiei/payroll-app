@@ -662,16 +662,23 @@ exports.getSemiMonthlyHistory = async (req, res) => {
       'SELECT name, rate FROM DeductionTypes ORDER BY id'
     );
 
-    const monthStart = new Date(`${month}-01`);
-    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
-
     for (const r of rows) {
-      const emp = { id: r.employee_id, daily_wage: r.daily_wage };
-      const monthly = await calculateRange(emp, monthStart, monthEnd);
-      const base = monthly.basePay + monthly.otPay;
+      const payMonth = (
+        r.pay_month instanceof Date ? r.pay_month : new Date(r.pay_month)
+      ).toISOString().slice(0, 7);
+      const { rows: others } = await pool.query(
+        `SELECT base_pay, ot_pay FROM HalfPayrollRecords
+         WHERE employee_id=$1 AND to_char(pay_month,'YYYY-MM')=$2 AND id<>$3`,
+        [r.employee_id, payMonth, r.id]
+      );
+      let monthlyBase = parseFloat(r.base_pay) + parseFloat(r.ot_pay);
+      if (others.length) {
+        monthlyBase += parseFloat(others[0].base_pay) + parseFloat(others[0].ot_pay);
+      }
+
       r.deduction_details = types.map((t) => {
         const rate = parseFloat(t.rate) || 0;
-        const amt = (base * rate) / 100;
+        const amt = (monthlyBase * rate) / 100;
         return { name: t.name, amount: parseFloat(amt.toFixed(2)) };
       });
 
