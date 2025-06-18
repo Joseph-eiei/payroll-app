@@ -745,7 +745,6 @@ exports.updateMonthlyRecord = async (req, res) => {
     savings_deposit = 0,
     savings_withdraw = 0,
     savings_remark = '',
-    savings_remark = '',
   } = req.body;
 
   try {
