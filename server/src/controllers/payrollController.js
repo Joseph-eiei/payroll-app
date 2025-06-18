@@ -617,14 +617,16 @@ exports.getMonthlyHistory = async (req, res) => {
       r.advance_total = r.advance_details.reduce((sum, a) => sum + a.amount, 0);
 
       const { rows: sav } = await pool.query(
-        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        'SELECT amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
         [r.employee_id, r.pay_month]
       );
       r.savings_deposit = 0;
       r.savings_withdraw = 0;
+      r.savings_remark = '';
       if (sav.length) {
         if (sav[0].is_deposit) r.savings_deposit = parseFloat(sav[0].amount);
         else r.savings_withdraw = parseFloat(sav[0].amount);
+        r.savings_remark = sav[0].remark || '';
       }
     }
 
@@ -703,14 +705,16 @@ exports.getSemiMonthlyHistory = async (req, res) => {
       r.advance_total = r.advance_details.reduce((sum, a) => sum + a.amount, 0);
 
       const { rows: sav } = await pool.query(
-        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        'SELECT amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
         [r.employee_id, r.pay_month]
       );
       r.savings_deposit = 0;
       r.savings_withdraw = 0;
+      r.savings_remark = '';
       if (sav.length) {
         if (sav[0].is_deposit) r.savings_deposit = parseFloat(sav[0].amount);
         else r.savings_withdraw = parseFloat(sav[0].amount);
+        r.savings_remark = sav[0].remark || '';
       }
     }
 
@@ -740,6 +744,8 @@ exports.updateMonthlyRecord = async (req, res) => {
     advance_updates = [],
     savings_deposit = 0,
     savings_withdraw = 0,
+    savings_remark = '',
+    savings_remark = '',
   } = req.body;
 
   try {
@@ -758,7 +764,7 @@ exports.updateMonthlyRecord = async (req, res) => {
     const r = rows[0];
 
     const { rows: advRows } = await pool.query(
-      `SELECT t.id, t.advance_id, -t.amount AS amount
+      `SELECT t.id, t.advance_id, -t.amount AS amount, t.remark
          FROM AdvanceTransactions t
          JOIN AdvanceLoans a ON t.advance_id=a.id
         WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
@@ -775,16 +781,16 @@ exports.updateMonthlyRecord = async (req, res) => {
             'UPDATE AdvanceLoans SET total_amount = total_amount + $1, updated_at=$3 WHERE id=$2',
             [diff, a.advance_id, r.pay_month]
           );
-          await pool.query('UPDATE AdvanceTransactions SET amount=$1 WHERE id=$2', [
-            -newAmt,
-            a.id,
-          ]);
         }
+        await pool.query(
+          'UPDATE AdvanceTransactions SET amount=$1, remark=$2 WHERE id=$3',
+          [-newAmt, upd.remark || '', a.id]
+        );
       }
     }
 
     const { rows: savRows } = await pool.query(
-      'SELECT id, amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      'SELECT id, amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
       [r.employee_id, r.pay_month]
     );
     const dep = parseFloat(savings_deposit) || 0;
@@ -795,14 +801,14 @@ exports.updateMonthlyRecord = async (req, res) => {
         await pool.query('DELETE FROM SavingsTransactions WHERE id=$1', [sav.id]);
       } else {
         await pool.query(
-          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2 WHERE id=$3',
-          [dep || wit, dep > 0, sav.id]
+          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2, remark=$3 WHERE id=$4',
+          [dep || wit, dep > 0, savings_remark, sav.id]
         );
       }
     } else if (dep > 0 || wit > 0) {
       await pool.query(
-        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit) VALUES ($1,$2,$3,$4)',
-        [r.employee_id, dep || wit, r.pay_month, dep > 0]
+        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark) VALUES ($1,$2,$3,$4,$5)',
+        [r.employee_id, dep || wit, r.pay_month, dep > 0, savings_remark]
       );
     }
 
@@ -842,7 +848,7 @@ exports.updateMonthlyRecord = async (req, res) => {
     const advTotal = adv.reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
     const { rows: sav } = await pool.query(
-      'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      'SELECT amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
       [r.employee_id, r.pay_month]
     );
     let savingsIncome = 0;
@@ -922,7 +928,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
     const r = rows[0];
 
     const { rows: advRows } = await pool.query(
-      `SELECT t.id, t.advance_id, -t.amount AS amount
+      `SELECT t.id, t.advance_id, -t.amount AS amount, t.remark
          FROM AdvanceTransactions t
          JOIN AdvanceLoans a ON t.advance_id=a.id
         WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
@@ -939,16 +945,16 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
             'UPDATE AdvanceLoans SET total_amount = total_amount + $1, updated_at=$3 WHERE id=$2',
             [diff, a.advance_id, r.pay_month]
           );
-          await pool.query('UPDATE AdvanceTransactions SET amount=$1 WHERE id=$2', [
-            -newAmt,
-            a.id,
-          ]);
         }
+        await pool.query(
+          'UPDATE AdvanceTransactions SET amount=$1, remark=$2 WHERE id=$3',
+          [-newAmt, upd.remark || '', a.id]
+        );
       }
     }
 
     const { rows: savRows } = await pool.query(
-      'SELECT id, amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      'SELECT id, amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
       [r.employee_id, r.pay_month]
     );
     const dep = parseFloat(savings_deposit) || 0;
@@ -959,14 +965,14 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
         await pool.query('DELETE FROM SavingsTransactions WHERE id=$1', [sav.id]);
       } else {
         await pool.query(
-          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2 WHERE id=$3',
-          [dep || wit, dep > 0, sav.id]
+          'UPDATE SavingsTransactions SET amount=$1, is_deposit=$2, remark=$3 WHERE id=$4',
+          [dep || wit, dep > 0, savings_remark, sav.id]
         );
       }
     } else if (dep > 0 || wit > 0) {
       await pool.query(
-        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit) VALUES ($1,$2,$3,$4)',
-        [r.employee_id, dep || wit, r.pay_month, dep > 0]
+        'INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark) VALUES ($1,$2,$3,$4,$5)',
+        [r.employee_id, dep || wit, r.pay_month, dep > 0, savings_remark]
       );
     }
 
@@ -1020,7 +1026,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
     const advTotal = adv.reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
     const { rows: sav } = await pool.query(
-      'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+      'SELECT amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
       [r.employee_id, r.pay_month]
     );
     let savingsIncome = 0;
@@ -1083,7 +1089,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
       const advTotal2 = adv2.reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
       const { rows: sav2 } = await pool.query(
-        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        'SELECT amount, is_deposit, remark FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
         [r.employee_id, r.pay_month]
       );
       let savingsDed2 = 0;
