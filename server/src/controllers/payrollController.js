@@ -991,7 +991,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
       r.pay_month instanceof Date ? r.pay_month : new Date(r.pay_month)
     ).toISOString().slice(0, 7);
     const { rows: others } = await pool.query(
-      `SELECT id, base_pay, ot_pay FROM HalfPayrollRecords
+      `SELECT * FROM HalfPayrollRecords
        WHERE employee_id=$1 AND to_char(pay_month,'YYYY-MM')=$2 AND id<>$3`,
       [r.employee_id, payMonth, id]
     );
@@ -1064,6 +1064,54 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
         id,
       ]
     );
+
+    if (r.period === 'first' && others.length) {
+      const o = others[0];
+      let otherDed2 = 0;
+      for (const d of types) {
+        const rate = parseFloat(d.rate) || 0;
+        otherDed2 += (monthlyBaseOt * rate) / 100;
+      }
+
+      const { rows: adv2 } = await pool.query(
+        `SELECT -t.amount AS amount
+           FROM AdvanceTransactions t
+           JOIN AdvanceLoans a ON t.advance_id=a.id
+          WHERE a.employee_id=$1 AND t.transaction_date=$2 AND t.amount<0`,
+        [r.employee_id, r.pay_month]
+      );
+      const advTotal2 = adv2.reduce((sum, a) => sum + parseFloat(a.amount), 0);
+
+      const { rows: sav2 } = await pool.query(
+        'SELECT amount, is_deposit FROM SavingsTransactions WHERE employee_id=$1 AND transaction_date=$2',
+        [r.employee_id, r.pay_month]
+      );
+      let savingsDed2 = 0;
+      if (sav2.length && sav2[0].is_deposit) {
+        savingsDed2 = parseFloat(sav2[0].amount);
+      }
+
+      otherDed2 += advTotal2 + savingsDed2;
+
+      const totalIncome2 = parseFloat(o.total_income);
+      const deductionsTotal2 =
+        parseFloat(o.water_deduction) +
+        parseFloat(o.electric_deduction) +
+        otherDed2;
+      const netPay2 = totalIncome2 - deductionsTotal2;
+
+      await pool.query(
+        `UPDATE HalfPayrollRecords
+         SET other_deductions=$1, deductions_total=$2, net_pay=$3
+         WHERE id=$4`,
+        [
+          parseFloat(otherDed2.toFixed(2)),
+          parseFloat(deductionsTotal2.toFixed(2)),
+          parseFloat(netPay2.toFixed(2)),
+          o.id,
+        ]
+      );
+    }
     await pool.query('COMMIT');
     res.json(updated[0]);
   } catch (err) {
