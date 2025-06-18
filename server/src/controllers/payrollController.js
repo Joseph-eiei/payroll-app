@@ -396,16 +396,17 @@ exports.recordMonthlyPayroll = async (req, res) => {
 
     await pool.query(
       `INSERT INTO PayrollRecords (
-        employee_id, pay_month, days_worked, hours_worked, bonus_count,
+        employee_id, pay_month, daily_wage, days_worked, hours_worked, bonus_count,
         ot_hours, sunday_days, base_pay, ot_pay, sunday_pay,
         water_deduction, electric_deduction, other_deductions, deductions_total,
         total_income, net_pay
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
       )`,
       [
         emp.id,
         `${payMonth}-01`,
+        parseFloat(emp.daily_wage),
         details.days,
         details.hours,
         details.bonus,
@@ -528,17 +529,18 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
 
     await pool.query(
       `INSERT INTO HalfPayrollRecords (
-        employee_id, pay_month, period, days_worked, hours_worked, bonus_count,
+        employee_id, pay_month, period, daily_wage, days_worked, hours_worked, bonus_count,
         ot_hours, sunday_days, base_pay, ot_pay, sunday_pay,
         water_deduction, electric_deduction, other_deductions, deductions_total,
         total_income, net_pay
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
       )`,
       [
         emp.id,
         `${payMonth}-01`,
         per,
+        parseFloat(emp.daily_wage),
         part.days,
         part.hours,
         part.bonus,
@@ -567,7 +569,8 @@ exports.getMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, e.first_name, e.last_name, e.nationality, e.daily_wage,
+      `SELECT p.*, COALESCE(p.daily_wage, e.daily_wage) AS daily_wage,
+              e.first_name, e.last_name, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM PayrollRecords p
        JOIN Employees e ON p.employee_id = e.id
@@ -635,7 +638,8 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
     const { rows } = await pool.query(
-      `SELECT h.*, e.first_name, e.last_name, e.nationality, e.daily_wage,
+      `SELECT h.*, COALESCE(h.daily_wage, e.daily_wage) AS daily_wage,
+              e.first_name, e.last_name, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM HalfPayrollRecords h
        JOIN Employees e ON h.employee_id = e.id
@@ -723,8 +727,10 @@ exports.updateMonthlyRecord = async (req, res) => {
   try {
     await pool.query('BEGIN');
     const { rows } = await pool.query(
-      `SELECT p.*, e.daily_wage FROM PayrollRecords p
-       JOIN Employees e ON p.employee_id=e.id WHERE p.id=$1`,
+      `SELECT p.*, COALESCE(p.daily_wage, e.daily_wage) AS daily_wage
+       FROM PayrollRecords p
+       JOIN Employees e ON p.employee_id = e.id
+       WHERE p.id=$1`,
       [id]
     );
     if (!rows.length) {
@@ -885,8 +891,10 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
   try {
     await pool.query('BEGIN');
     const { rows } = await pool.query(
-      `SELECT h.*, e.daily_wage FROM HalfPayrollRecords h
-       JOIN Employees e ON h.employee_id=e.id WHERE h.id=$1`,
+      `SELECT h.*, COALESCE(h.daily_wage, e.daily_wage) AS daily_wage
+       FROM HalfPayrollRecords h
+       JOIN Employees e ON h.employee_id = e.id
+       WHERE h.id=$1`,
       [id]
     );
     if (!rows.length) {
