@@ -97,37 +97,40 @@ function PayrollHistoryPage() {
     };
   };
 
+  const renderHeader = (showPeriod = false) => (
+    <>
+      <tr className="bg-gray-100">
+        <th rowSpan="2" className="px-2 py-2">รหัส</th>
+        <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+        {showPeriod && <th rowSpan="2" className="px-2 py-2">รอบ</th>}
+        <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
+        <th colSpan={5 + deductionTypes.length} className="px-2 py-2 text-center">รายหัก</th>
+        <th rowSpan="2" className="px-2 py-2">รับสุทธิ</th>
+      </tr>
+      <tr className="bg-gray-100">
+        <th className="px-2 py-2">วันทำงาน</th>
+        <th className="px-2 py-2">ชั่วโมง</th>
+        <th className="px-2 py-2">เบี้ยขยัน</th>
+        <th className="px-2 py-2">ค่าแรงรวม</th>
+        <th className="px-2 py-2">OT(ชม.)</th>
+        <th className="px-2 py-2">ค่า OT</th>
+        <th className="px-2 py-2">อาทิตย์(วัน)</th>
+        <th className="px-2 py-2">ค่าอาทิตย์</th>
+        <th className="px-2 py-2">รวมรายได้</th>
+        <th className="px-2 py-2">ค่าน้ำ</th>
+        <th className="px-2 py-2">ค่าไฟ</th>
+        {deductionTypes.map((d) => (
+          <th key={d.id} className="px-2 py-2">{`${d.name} (${parseFloat(d.rate)}%)`}</th>
+        ))}
+        <th className="px-2 py-2">เงินเบิก</th>
+        <th className="px-2 py-2">เงินเก็บสะสม</th>
+        <th className="px-2 py-2">รวมยอดหัก</th>
+      </tr>
+    </>
+  );
+
   const renderTable = () => (
     <table className="min-w-full bg-white shadow rounded text-sm">
-      <thead className="bg-gray-100">
-        <tr>
-          <th rowSpan="2" className="px-2 py-2">รหัส</th>
-          <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
-          {cycle === 'ครึ่งเดือน' && <th rowSpan="2" className="px-2 py-2">รอบ</th>}
-          <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
-          <th colSpan={5 + deductionTypes.length} className="px-2 py-2 text-center">รายหัก</th>
-          <th rowSpan="2" className="px-2 py-2">รับสุทธิ</th>
-        </tr>
-        <tr>
-          <th className="px-2 py-2">วันทำงาน</th>
-          <th className="px-2 py-2">ชั่วโมง</th>
-          <th className="px-2 py-2">เบี้ยขยัน</th>
-          <th className="px-2 py-2">ค่าแรงรวม</th>
-          <th className="px-2 py-2">OT(ชม.)</th>
-          <th className="px-2 py-2">ค่า OT</th>
-          <th className="px-2 py-2">อาทิตย์(วัน)</th>
-          <th className="px-2 py-2">ค่าอาทิตย์</th>
-          <th className="px-2 py-2">รวมรายได้</th>
-          <th className="px-2 py-2">ค่าน้ำ</th>
-          <th className="px-2 py-2">ค่าไฟ</th>
-          {deductionTypes.map((d) => (
-            <th key={d.id} className="px-2 py-2">{`${d.name} (${parseFloat(d.rate)}%)`}</th>
-          ))}
-          <th className="px-2 py-2">เงินเบิก</th>
-          <th className="px-2 py-2">เงินเก็บสะสม</th>
-          <th className="px-2 py-2">รวมยอดหัก</th>
-        </tr>
-      </thead>
       <tbody>
         {records.map((p) => {
           const key = `${p.employee_id}-${p.period || 'm'}`;
@@ -135,6 +138,7 @@ function PayrollHistoryPage() {
           const vals = isEdit ? computeValues(p, editInputs) : {};
           return (
             <React.Fragment key={key}>
+              {renderHeader(cycle === 'ครึ่งเดือน')}
               <tr className="border-t">
                 <td rowSpan="3" className="px-2 py-1 text-center">{p.employee_id}</td>
                 <td rowSpan="3" className="px-2 py-1">
