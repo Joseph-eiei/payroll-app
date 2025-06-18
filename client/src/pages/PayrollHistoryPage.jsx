@@ -16,6 +16,7 @@ function PayrollHistoryPage() {
     advance_details: [],
     savings_deposit: 0,
     savings_withdraw: 0,
+    savings_remark: '',
     advance_total: 0,
   });
 
@@ -300,6 +301,16 @@ function PayrollHistoryPage() {
                                     setEditInputs({ ...editInputs, advance_details: list });
                                   }}
                                 />
+                                <input
+                                  type="text"
+                                  className="border p-1"
+                                  value={a.remark || ''}
+                                  onChange={(e) => {
+                                    const list = [...editInputs.advance_details];
+                                    list[idx].remark = e.target.value;
+                                    setEditInputs({ ...editInputs, advance_details: list });
+                                  }}
+                                />
                                 <span className="text-xs text-gray-500 whitespace-nowrap">
                                   คงเหลือ {Number(a.remaining).toFixed(2)}
                                 </span>
@@ -319,6 +330,7 @@ function PayrollHistoryPage() {
                           {p.advance_details.map((a, idx) => (
                             <div key={idx} className="whitespace-nowrap">
                               {`${idx + 1}. ${a.name} หักเพิ่ม ${Number(a.amount).toLocaleString()} คงเหลือ ${Number(a.remaining).toFixed(2)}`}
+                              {a.remark && ` หมายเหตุ: ${a.remark}`}
                             </div>
                           ))}
                         </div>
@@ -350,12 +362,20 @@ function PayrollHistoryPage() {
                               }
                             />
                           )}
+                          <input
+                            type="text"
+                            placeholder="หมายเหตุ"
+                            className="border p-1"
+                            value={editInputs.savings_remark}
+                            onChange={(e) => setEditInputs({ ...editInputs, savings_remark: e.target.value })}
+                          />
                         </div>
                       ) : (
                         <>
                           {p.savings_deposit > 0 && `ฝาก ${Number(p.savings_deposit).toFixed(2)}`}
                           {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
                           {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
+                          {p.savings_remark && ` หมายเหตุ: ${p.savings_remark}`}
                         </>
                       )}
                     </td>
@@ -386,9 +406,11 @@ function PayrollHistoryPage() {
                                 tx_id: a.tx_id,
                                 advance_id: a.advance_id,
                                 amount: a.amount,
+                                remark: a.remark,
                               })),
                               savings_deposit: editInputs.savings_deposit,
                               savings_withdraw: editInputs.savings_withdraw,
+                              savings_remark: editInputs.savings_remark,
                             };
                             if (cycle === 'รายเดือน') {
                               await axios.put(`/api/payroll/monthly/history/${p.id}`, payload);
@@ -426,6 +448,7 @@ function PayrollHistoryPage() {
                           advance_details: p.advance_details ? p.advance_details.map((a) => ({ ...a })) : [],
                           savings_deposit: p.savings_deposit,
                           savings_withdraw: p.savings_withdraw,
+                          savings_remark: p.savings_remark || '',
                           advance_total: p.advance_total || 0,
                         });
                       }}
