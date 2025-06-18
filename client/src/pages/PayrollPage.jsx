@@ -188,7 +188,7 @@ function PayrollPage() {
               <td className="px-2 py-1 text-center">{p.ot_pay.toFixed(2)}</td>
               <td className="px-2 py-1 text-center">{p.sunday_days}</td>
               <td className="px-2 py-1 text-center">{p.sunday_pay.toFixed(2)}</td>
-              <td className="px-2 py-1 text-center">{p.total_income.toFixed(2)}</td>
+              <td className="px-2 py-1 text-center text-green-800 font-bold">{p.total_income.toFixed(2)}</td>
             </tr>
             {renderDeductionHeader(showDeduction)}
               {showDeduction && (
@@ -298,7 +298,7 @@ function PayrollPage() {
                         }
                       />
                     </td>
-                    <td className="px-2 py-1 text-center">{p.deductions_total.toFixed(2)}</td>
+                    <td className="px-2 py-1 text-center text-red-800 font-bold">{p.deductions_total.toFixed(2)}</td>
                   </>
                 </tr>
               )}
