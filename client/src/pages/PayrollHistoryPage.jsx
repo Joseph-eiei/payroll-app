@@ -329,24 +329,27 @@ function PayrollHistoryPage() {
                     <td className="px-2 py-1 text-center">
                       {isEdit ? (
                         <div className="flex space-x-1">
-                          <input
-                            type="number"
-                            placeholder="ฝาก"
-                            className="border w-16 p-1"
-                            value={editInputs.savings_deposit}
-                            onChange={(e) =>
-                              setEditInputs({ ...editInputs, savings_deposit: e.target.value })
-                            }
-                          />
-                          <input
-                            type="number"
-                            placeholder="ถอน"
-                            className="border w-16 p-1"
-                            value={editInputs.savings_withdraw}
-                            onChange={(e) =>
-                              setEditInputs({ ...editInputs, savings_withdraw: e.target.value })
-                            }
-                          />
+                          {editInputs.savings_withdraw > 0 ? (
+                            <input
+                              type="number"
+                              placeholder="ถอน"
+                              className="border w-16 p-1"
+                              value={editInputs.savings_withdraw}
+                              onChange={(e) =>
+                                setEditInputs({ ...editInputs, savings_withdraw: e.target.value })
+                              }
+                            />
+                          ) : (
+                            <input
+                              type="number"
+                              placeholder="ฝาก"
+                              className="border w-16 p-1"
+                              value={editInputs.savings_deposit}
+                              onChange={(e) =>
+                                setEditInputs({ ...editInputs, savings_deposit: e.target.value })
+                              }
+                            />
+                          )}
                         </div>
                       ) : (
                         <>
