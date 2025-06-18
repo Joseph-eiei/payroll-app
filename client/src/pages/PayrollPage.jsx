@@ -113,47 +113,75 @@ function PayrollPage() {
     }
   };
 
-  const renderHeader = (showDeduction = true) => (
-    <>
-      <tr className="bg-gray-100">
-        <th rowSpan="2" className="px-2 py-2">รหัส</th>
-        <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
-        <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
-        {showDeduction && (
-          <th
-            colSpan={5 + deductionTypes.length}
-            className="px-2 py-2 text-center"
-          >
-            รายหัก
-          </th>
-        )}
-        {!showDeduction && <th rowSpan="2" className="px-2 py-2">รายหัก</th>}
-        <th rowSpan="2" className="px-2 py-2">รับสุทธิ</th>
-        <th rowSpan="2" className="px-2 py-2" />
-      </tr>
-      <tr className="bg-gray-100">
-        <th className="px-2 py-2">วันทำงาน</th>
-        <th className="px-2 py-2">ชั่วโมง</th>
-        <th className="px-2 py-2">เบี้ยขยัน</th>
-        <th className="px-2 py-2">ค่าแรงรวม</th>
-        <th className="px-2 py-2">OT(ชม.)</th>
-        <th className="px-2 py-2">ค่า OT</th>
-        <th className="px-2 py-2">อาทิตย์(วัน)</th>
-        <th className="px-2 py-2">ค่าอาทิตย์</th>
-        <th className="px-2 py-2">รวมรายได้</th>
-        {showDeduction && <th className="px-2 py-2">ค่าน้ำ</th>}
-        {showDeduction && <th className="px-2 py-2">ค่าไฟ</th>}
-        {showDeduction &&
-          deductionTypes.map((d) => (
+  const renderIncomeHeader = (showDeduction) => (
+    <tr className="bg-gray-100">
+      <th className="px-2 py-2">รหัส</th>
+      <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+      <th className="px-2 py-2">วันทำงาน</th>
+      <th className="px-2 py-2">ชั่วโมง</th>
+      <th className="px-2 py-2">เบี้ยขยัน</th>
+      <th className="px-2 py-2">ค่าแรงรวม</th>
+      <th className="px-2 py-2">OT(ชม.)</th>
+      <th className="px-2 py-2">ค่า OT</th>
+      <th className="px-2 py-2">อาทิตย์(วัน)</th>
+      <th className="px-2 py-2">ค่าอาทิตย์</th>
+      <th className="px-2 py-2">รวมรายได้</th>
+      {showDeduction && (
+        <>
+          <th colSpan={5 + deductionTypes.length} />
+          <th />
+          <th />
+        </>
+      )}
+      {!showDeduction && (
+        <>
+          <th />
+          <th />
+          <th />
+        </>
+      )}
+    </tr>
+  );
+
+  const renderDeductionHeader = (showDeduction) => (
+    <tr className="bg-gray-100">
+      <th />
+      <th />
+      <th colSpan="9" className="text-center">รายหัก</th>
+      {showDeduction && (
+        <>
+          <th className="px-2 py-2">ค่าน้ำ</th>
+          <th className="px-2 py-2">ค่าไฟ</th>
+          {deductionTypes.map((d) => (
             <th key={d.id} className="px-2 py-2">
               {`${d.name} (${parseFloat(d.rate)}%)`}
             </th>
           ))}
-        {showDeduction && <th className="px-2 py-2">เงินเบิก</th>}
-        {showDeduction && <th className="px-2 py-2">เงินเก็บสะสม</th>}
-        {showDeduction && <th className="px-2 py-2">รวมยอดหัก</th>}
-      </tr>
-    </>
+          <th className="px-2 py-2">เงินเบิก</th>
+          <th className="px-2 py-2">เงินเก็บสะสม</th>
+          <th className="px-2 py-2">รวมยอดหัก</th>
+          <th />
+          <th />
+        </>
+      )}
+      {!showDeduction && (
+        <>
+          <th className="px-2 py-2">รายหัก</th>
+          <th />
+          <th />
+        </>
+      )}
+    </tr>
+  );
+
+  const renderNetHeader = (showDeduction) => (
+    <tr className="bg-gray-100">
+      <th />
+      <th />
+      <th colSpan={9 + (showDeduction ? 5 + deductionTypes.length : 1)} />
+      <th className="px-2 py-2">รับสุทธิ</th>
+      <th className="px-2 py-2" />
+    </tr>
   );
 
   const renderPayrollTable = (data, showDeduction = true) => (
@@ -161,10 +189,10 @@ function PayrollPage() {
       <tbody>
         {data.map((p) => (
           <React.Fragment key={p.employee_id}>
-            {renderHeader(showDeduction)}
+            {renderIncomeHeader(showDeduction)}
             <tr className="border-t">
-              <td rowSpan="3" className="px-2 py-1 text-center">{p.employee_id}</td>
-              <td rowSpan="3" className="px-2 py-1">{p.name}</td>
+              <td rowSpan="5" className="px-2 py-1 text-center">{p.employee_id}</td>
+              <td rowSpan="5" className="px-2 py-1">{p.name}</td>
               <td className="px-2 py-1 text-center">{p.days_worked}</td>
               <td className="px-2 py-1 text-center">{p.hours_worked}</td>
               <td className="px-2 py-1 text-center">{p.bonus_count}</td>
@@ -190,6 +218,7 @@ function PayrollPage() {
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
             </tr>
+            {renderDeductionHeader(showDeduction)}
             <tr>
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
@@ -312,6 +341,7 @@ function PayrollPage() {
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
             </tr>
+            {renderNetHeader(showDeduction)}
             <tr>
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
