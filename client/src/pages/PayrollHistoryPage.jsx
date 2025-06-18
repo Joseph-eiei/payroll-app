@@ -63,6 +63,23 @@ function PayrollHistoryPage() {
     const basePay = days * daily + hours * (daily / 8) + bonus * 50;
     const otPay = ot * ((daily / 8) * 1.5);
     const sunPay = sun * (daily * 1.5);
+
+    let otherBaseOt = 0;
+    if (
+      rec.period === 'second' &&
+      rec.deduction_details &&
+      rec.deduction_details.length > 0 &&
+      deductionTypes.length > 0
+    ) {
+      const d0 = rec.deduction_details[0];
+      const t0 = deductionTypes.find((d) => d.name === d0.name);
+      if (t0 && parseFloat(t0.rate) > 0) {
+        const monthlyBase = d0.amount / (parseFloat(t0.rate) / 100);
+        const currentBase = parseFloat(rec.base_pay || 0) + parseFloat(rec.ot_pay || 0);
+        otherBaseOt = monthlyBase - currentBase;
+      }
+    }
+
     const advTotal =
       inputs.advance_details && inputs.advance_details.length > 0
         ? inputs.advance_details.reduce(
@@ -79,9 +96,10 @@ function PayrollHistoryPage() {
         ? parseFloat(inputs.savings_withdraw) || 0
         : rec.savings_withdraw || 0;
     const totalIncome = basePay + otPay + sunPay + savingsWd;
+    const baseForDeduction = basePay + otPay + otherBaseOt;
     let dedType = 0;
     deductionTypes.forEach((d) => {
-      dedType += ((basePay + otPay) * (parseFloat(d.rate) || 0)) / 100;
+      dedType += (baseForDeduction * (parseFloat(d.rate) || 0)) / 100;
     });
     const otherDed = dedType + advTotal + savingsDep;
     const deductionsTotal =
@@ -91,7 +109,7 @@ function PayrollHistoryPage() {
     const netPay = totalIncome - (includeDeduction ? deductionsTotal : 0);
     const details = deductionTypes.map((d) => ({
       name: d.name,
-      amount: ((basePay + otPay) * (parseFloat(d.rate) || 0)) / 100,
+      amount: (baseForDeduction * (parseFloat(d.rate) || 0)) / 100,
     }));
     return {
       basePay,
