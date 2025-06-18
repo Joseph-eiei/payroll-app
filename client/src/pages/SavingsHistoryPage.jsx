@@ -65,7 +65,7 @@ function SavingsHistoryPage() {
             {history.map((t) => (
               <tr key={t.id} className="border-t">
                 <td className="px-2 py-1">{t.transaction_date}</td>
-                <td className={`px-2 py-1 ${t.is_deposit ? 'text-blue-600' : 'text-red-600'}`}>{t.amount}</td>
+                <td className={`px-2 py-1 font-bold ${t.is_deposit ? 'text-green-600' : 'text-red-600'}`}>{t.amount}</td>
                 <td className="px-2 py-1">{t.is_deposit ? 'ฝาก' : 'ถอน'}</td>
                 <td className="px-2 py-1">{t.remark}</td>
               </tr>

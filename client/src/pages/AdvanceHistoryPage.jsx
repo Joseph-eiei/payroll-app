@@ -78,7 +78,7 @@ function AdvanceHistoryPage() {
                     <tr key={t.id} className="border-t">
                       <td className="px-2 py-1">{t.date}</td>
                       <td className="px-2 py-1">{isAdd ? 'เบิกเพิ่ม' : 'หักเงินเบิก'}</td>
-                      <td className={`px-2 py-1 ${isAdd ? 'text-green-600' : 'text-red-600'}`}>{t.amount}</td>
+                      <td className={`px-2 py-1 ${isAdd ? 'text-red-600' : 'text-green-600'}`}>{t.amount}</td>
                       <td className="px-2 py-1">{t.remark}</td>
                     </tr>
                   );
