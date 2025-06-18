@@ -642,16 +642,21 @@ exports.getMonthlyHistory = async (req, res) => {
 
 exports.getSemiMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
+  const period = req.query.period;
   try {
-    const { rows } = await pool.query(
+    let query =
       `SELECT h.*, COALESCE(h.daily_wage, e.daily_wage) AS daily_wage,
               e.first_name, e.last_name, e.nickname, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM HalfPayrollRecords h
        JOIN Employees e ON h.employee_id = e.id
-       WHERE to_char(h.pay_month, 'YYYY-MM') = $1`,
-      [month]
-    );
+       WHERE to_char(h.pay_month, 'YYYY-MM') = $1`;
+    const params = [month];
+    if (period === 'first' || period === 'second') {
+      query += ' AND h.period=$2';
+      params.push(period);
+    }
+    const { rows } = await pool.query(query, params);
 
     const { rows: types } = await pool.query(
       'SELECT name, rate FROM DeductionTypes ORDER BY id'
