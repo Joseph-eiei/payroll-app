@@ -24,13 +24,26 @@ function PayrollHistoryPage() {
     try {
       if (c === 'รายเดือน') {
         const res = await axios.get(`/api/payroll/monthly/history?month=${m}`);
-        setRecords(res.data);
+        const sorted = res.data.sort((a, b) => {
+          if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
+          if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;
+          return a.employee_id - b.employee_id;
+        });
+        setRecords(sorted);
       } else {
         const p = period === '16-สิ้นเดือน' ? 'second' : 'first';
         const res = await axios.get(
           `/api/payroll/semi-monthly/history?month=${m}&period=${p}`,
         );
-        setRecords(res.data);
+        const sorted = res.data.sort((a, b) => {
+          if (a.nationality === 'ไทย' && b.nationality !== 'ไทย') return -1;
+          if (a.nationality !== 'ไทย' && b.nationality === 'ไทย') return 1;
+          if (a.employee_id === b.employee_id) {
+            return (a.period || '').localeCompare(b.period || '');
+          }
+          return a.employee_id - b.employee_id;
+        });
+        setRecords(sorted);
       }
     } catch (err) {
       console.error(err);
@@ -183,12 +196,19 @@ function PayrollHistoryPage() {
         `}
       </style>
       <tbody className="payroll-bordered">
-        {data.map((p) => {
+        {data.map((p, idx) => {
           const key = `${p.employee_id}-${p.period || 'm'}`;
           const isEdit = editingKey === key;
           const vals = isEdit ? computeValues(p, editInputs, showDeduction) : {};
           return (
             <React.Fragment key={key}>
+              {(idx === 0 || p.nationality !== data[idx - 1].nationality) && (
+                <tr className="bg-blue-100">
+                  <td colSpan={100} className="px-2 py-1 font-semibold text-left">
+                    {p.nationality === 'ไทย' ? 'คนไทย' : 'ต่างชาติ'}
+                  </td>
+                </tr>
+              )}
               {renderIncomeHeader()}
               <tr className={`border-t ${fixedRowClass}`}>
                 <td rowSpan="5" className="px-2 py-1">
