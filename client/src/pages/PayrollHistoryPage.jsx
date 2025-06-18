@@ -126,12 +126,15 @@ function PayrollHistoryPage() {
   const renderIncomeHeader = () => (
     <tr className="bg-gray-100">
       <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+      <th className="px-2 py-2">ค่าแรง/วัน</th>
       <th className="px-2 py-2">วันทำงาน</th>
       <th className="px-2 py-2">ชั่วโมง</th>
       <th className="px-2 py-2">เบี้ยขยัน</th>
       <th className="px-2 py-2">ค่าแรงรวม</th>
+      <th className="px-2 py-2">OT/ชม.</th>
       <th className="px-2 py-2">OT(ชม.)</th>
       <th className="px-2 py-2">ค่า OT</th>
+      <th className="px-2 py-2">ค่าแรงวันอาทิตย์</th>
       <th className="px-2 py-2">อาทิตย์(วัน)</th>
       <th className="px-2 py-2">ค่าอาทิตย์</th>
       <th className="px-2 py-2">รวมรายได้</th>
@@ -192,6 +195,9 @@ function PayrollHistoryPage() {
                   {`${p.first_name} ${p.last_name}${p.nickname ? `(${p.nickname})` : ''}`}
                 </td>
                 <td className="px-2 py-1 text-center">
+                  {parseFloat(p.daily_wage).toFixed(2)}
+                </td>
+                <td className="px-2 py-1 text-center">
                   {isEdit ? (
                     <input
                       type="number"
@@ -231,6 +237,9 @@ function PayrollHistoryPage() {
                   {isEdit ? vals.basePay.toFixed(2) : Number(p.base_pay).toFixed(2)}
                 </td>
                 <td className="px-2 py-1 text-center">
+                  {((parseFloat(p.daily_wage) / 8) * 1.5).toFixed(2)}
+                </td>
+                <td className="px-2 py-1 text-center">
                   {isEdit ? (
                     <input
                       type="number"
@@ -244,6 +253,9 @@ function PayrollHistoryPage() {
                 </td>
                 <td className="px-2 py-1 text-center">
                   {isEdit ? vals.otPay.toFixed(2) : Number(p.ot_pay).toFixed(2)}
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {(parseFloat(p.daily_wage) * 1.5).toFixed(2)}
                 </td>
                 <td className="px-2 py-1 text-center">
                   {isEdit ? (
