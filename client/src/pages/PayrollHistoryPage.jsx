@@ -192,7 +192,14 @@ function PayrollHistoryPage() {
               {renderIncomeHeader()}
               <tr className={`border-t ${fixedRowClass}`}>
                 <td rowSpan="5" className="px-2 py-1">
-                  {`${p.first_name} ${p.last_name}${p.nickname ? `(${p.nickname})` : ''}`}
+                  <div className='mb-1'>{`${p.first_name} ${p.last_name}${p.nickname ? `(${p.nickname})` : ''}`}</div>
+                  {p.bank_name && p.bank_account_number && (
+                    <div className="text-xs text-gray-500">
+                      <div>{p.bank_name}</div>
+                      <div>{p.bank_account_number}</div>
+                      {p.bank_account_name && <div>{p.bank_account_name}</div>}
+                    </div>
+                  )}
                 </td>
                 <td className="px-2 py-1 text-center">
                   {parseFloat(p.daily_wage).toFixed(2)}
