@@ -134,240 +134,288 @@ function PayrollHistoryPage() {
           const isEdit = editingKey === key;
           const vals = isEdit ? computeValues(p, editInputs) : {};
           return (
-            <tr key={key} className="border-t">
-              <td className="px-2 py-1 text-center">{p.employee_id}</td>
-              <td className="px-2 py-1">
-                <div>{`${p.first_name} ${p.last_name}`}</div>
-                <div className="text-xs text-gray-500 whitespace-nowrap">
-                  {p.bank_account_name || '-'} {p.bank_account_number || ''} {p.bank_name || ''}
-                </div>
-              </td>
-              {cycle === 'ครึ่งเดือน' && (
-                <td className="px-2 py-1 text-center">
-                  {p.period === 'first' ? '1-15' : '16-สิ้นเดือน'}
+            <React.Fragment key={key}>
+              <tr className="border-t">
+                <td rowSpan="3" className="px-2 py-1 text-center">{p.employee_id}</td>
+                <td rowSpan="3" className="px-2 py-1">
+                  <div>{`${p.first_name} ${p.last_name}`}</div>
+                  <div className="text-xs text-gray-500 whitespace-nowrap">
+                    {p.bank_account_name || '-'} {p.bank_account_number || ''} {p.bank_name || ''}
+                  </div>
                 </td>
-              )}
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    className="border w-16 p-1"
-                    value={editInputs.days_worked}
-                    onChange={(e) => setEditInputs({ ...editInputs, days_worked: e.target.value })}
-                  />
-                ) : (
-                  p.days_worked
-                )}
-              </td>
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    className="border w-16 p-1"
-                    value={editInputs.hours_worked}
-                    onChange={(e) => setEditInputs({ ...editInputs, hours_worked: e.target.value })}
-                  />
-                ) : (
-                  p.hours_worked
-                )}
-              </td>
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    className="border w-12 p-1"
-                    value={editInputs.bonus_count}
-                    onChange={(e) => setEditInputs({ ...editInputs, bonus_count: e.target.value })}
-                  />
-                ) : (
-                  p.bonus_count
-                )}
-              </td>
-              <td className="px-2 py-1 text-right">{isEdit ? vals.basePay.toFixed(2) : Number(p.base_pay).toFixed(2)}</td>
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    className="border w-16 p-1"
-                    value={editInputs.ot_hours}
-                    onChange={(e) => setEditInputs({ ...editInputs, ot_hours: e.target.value })}
-                  />
-                ) : (
-                  p.ot_hours
-                )}
-              </td>
-              <td className="px-2 py-1 text-right">{isEdit ? vals.otPay.toFixed(2) : Number(p.ot_pay).toFixed(2)}</td>
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    className="border w-16 p-1"
-                    value={editInputs.sunday_days}
-                    onChange={(e) => setEditInputs({ ...editInputs, sunday_days: e.target.value })}
-                  />
-                ) : (
-                  p.sunday_days
-                )}
-              </td>
-              <td className="px-2 py-1 text-right">{isEdit ? vals.sunPay.toFixed(2) : Number(p.sunday_pay).toFixed(2)}</td>
-              <td className="px-2 py-1 text-right">{isEdit ? vals.totalIncome.toFixed(2) : Number(p.total_income).toFixed(2)}</td>
-              <td className="px-2 py-1 text-right">{Number(p.water_deduction).toFixed(2)}</td>
-              <td className="px-2 py-1 text-right">{Number(p.electric_deduction).toFixed(2)}</td>
-              {deductionTypes.map((d) => {
-                const detail = isEdit
-                  ? vals.details.find((dd) => dd.name === d.name)
-                  : p.deduction_details?.find((dd) => dd.name === d.name);
-                return (
-                  <td key={d.id} className="px-2 py-1 text-right">
-                    {detail ? Number(detail.amount).toFixed(2) : '0.00'}
+                {cycle === 'ครึ่งเดือน' && (
+                  <td rowSpan="3" className="px-2 py-1 text-center">
+                    {p.period === 'first' ? '1-15' : '16-สิ้นเดือน'}
                   </td>
-                );
-              })}
-              <td className="px-2 py-1">
-                {isEdit ? (
-                  <div className="space-y-1">
-                    {editInputs.advance_details.length > 0 ? (
-                      editInputs.advance_details.map((a, idx) => (
-                        <div key={a.tx_id} className="flex items-center space-x-1">
-                          <span className="whitespace-nowrap">{a.name}</span>
-                          <input
-                            type="number"
-                            className="border w-16 p-1"
-                            value={a.amount}
-                            onChange={(e) => {
-                              const list = [...editInputs.advance_details];
-                              list[idx].amount = e.target.value;
-                              setEditInputs({ ...editInputs, advance_details: list });
-                            }}
-                          />
-                          <span className="text-xs text-gray-500 whitespace-nowrap">
-                            คงเหลือ {Number(a.remaining).toFixed(2)}
-                          </span>
+                )}
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="border w-16 p-1"
+                      value={editInputs.days_worked}
+                      onChange={(e) => setEditInputs({ ...editInputs, days_worked: e.target.value })}
+                    />
+                  ) : (
+                    p.days_worked
+                  )}
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="border w-16 p-1"
+                      value={editInputs.hours_worked}
+                      onChange={(e) => setEditInputs({ ...editInputs, hours_worked: e.target.value })}
+                    />
+                  ) : (
+                    p.hours_worked
+                  )}
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="border w-12 p-1"
+                      value={editInputs.bonus_count}
+                      onChange={(e) => setEditInputs({ ...editInputs, bonus_count: e.target.value })}
+                    />
+                  ) : (
+                    p.bonus_count
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.basePay.toFixed(2) : Number(p.base_pay).toFixed(2)}</td>
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="border w-16 p-1"
+                      value={editInputs.ot_hours}
+                      onChange={(e) => setEditInputs({ ...editInputs, ot_hours: e.target.value })}
+                    />
+                  ) : (
+                    p.ot_hours
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.otPay.toFixed(2) : Number(p.ot_pay).toFixed(2)}</td>
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="border w-16 p-1"
+                      value={editInputs.sunday_days}
+                      onChange={(e) => setEditInputs({ ...editInputs, sunday_days: e.target.value })}
+                    />
+                  ) : (
+                    p.sunday_days
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.sunPay.toFixed(2) : Number(p.sunday_pay).toFixed(2)}</td>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.totalIncome.toFixed(2) : Number(p.total_income).toFixed(2)}</td>
+                {(
+                  <>
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
+                    {deductionTypes.map((d) => (
+                      <td key={`${key}-${d.id}-blank`} className="px-2 py-1" />
+                    ))}
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
+                  </>
+                )}
+                <td className="px-2 py-1" />
+              </tr>
+              <tr>
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1 text-right">{Number(p.water_deduction).toFixed(2)}</td>
+                <td className="px-2 py-1 text-right">{Number(p.electric_deduction).toFixed(2)}</td>
+                {deductionTypes.map((d) => {
+                  const detail = isEdit
+                    ? vals.details.find((dd) => dd.name === d.name)
+                    : p.deduction_details?.find((dd) => dd.name === d.name);
+                  return (
+                    <td key={`${key}-${d.id}`} className="px-2 py-1 text-right">
+                      {detail ? Number(detail.amount).toFixed(2) : '0.00'}
+                    </td>
+                  );
+                })}
+                <td className="px-2 py-1">
+                  {isEdit ? (
+                    <div className="space-y-1">
+                      {editInputs.advance_details.length > 0 ? (
+                        editInputs.advance_details.map((a, idx) => (
+                          <div key={a.tx_id} className="flex items-center space-x-1">
+                            <span className="whitespace-nowrap">{a.name}</span>
+                            <input
+                              type="number"
+                              className="border w-16 p-1"
+                              value={a.amount}
+                              onChange={(e) => {
+                                const list = [...editInputs.advance_details];
+                                list[idx].amount = e.target.value;
+                                setEditInputs({ ...editInputs, advance_details: list });
+                              }}
+                            />
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              คงเหลือ {Number(a.remaining).toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <input
+                          type="number"
+                          className="border w-20 p-1"
+                          value={editInputs.advance_total || 0}
+                          onChange={(e) => setEditInputs({ ...editInputs, advance_total: e.target.value })}
+                        />
+                      )}
+                    </div>
+                  ) : p.advance_details && p.advance_details.length > 0 ? (
+                    <div className="space-y-1">
+                      {p.advance_details.map((a, idx) => (
+                        <div key={idx} className="whitespace-nowrap">
+                          {`${idx + 1}. ${a.name} หักเพิ่ม ${Number(a.amount).toLocaleString()} คงเหลือ ${Number(a.remaining).toFixed(2)}`}
                         </div>
-                      ))
-                    ) : (
+                      ))}
+                    </div>
+                  ) : (
+                    Number(p.advance_total || 0).toFixed(2)
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right">
+                  {isEdit ? (
+                    <div className="flex space-x-1">
                       <input
                         type="number"
-                        className="border w-20 p-1"
-                        value={editInputs.advance_total || 0}
-                        onChange={(e) => setEditInputs({ ...editInputs, advance_total: e.target.value })}
-                      />
-                    )}
-                  </div>
-                ) : p.advance_details && p.advance_details.length > 0 ? (
-                  <div className="space-y-1">
-                    {p.advance_details.map((a, idx) => (
-                      <div key={idx} className="whitespace-nowrap">
-                        {`${idx + 1}. ${a.name} หักเพิ่ม ${Number(a.amount).toLocaleString()} คงเหลือ ${Number(a.remaining).toFixed(2)}`}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  Number(p.advance_total || 0).toFixed(2)
-                )}
-              </td>
-              <td className="px-2 py-1 text-right">
-                {isEdit ? (
-                  <div className="flex space-x-1">
-                    <input
-                      type="number"
-                      placeholder="ฝาก"
-                      className="border w-16 p-1"
-                      value={editInputs.savings_deposit}
-                      onChange={(e) =>
-                        setEditInputs({ ...editInputs, savings_deposit: e.target.value })
-                      }
-                    />
-                    <input
-                      type="number"
-                      placeholder="ถอน"
-                      className="border w-16 p-1"
-                      value={editInputs.savings_withdraw}
-                      onChange={(e) =>
-                        setEditInputs({ ...editInputs, savings_withdraw: e.target.value })
-                      }
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {p.savings_deposit > 0 && `ฝาก ${Number(p.savings_deposit).toFixed(2)}`}
-                    {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
-                    {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
-                  </>
-                )}
-              </td>
-              <td className="px-2 py-1 text-right">{isEdit ? vals.deductionsTotal.toFixed(2) : Number(p.deductions_total).toFixed(2)}</td>
-              <td className="px-2 py-1 text-right">
-                {isEdit ? vals.netPay.toFixed(2) : Number(p.net_pay).toFixed(2)}
-              </td>
-              <td className="px-2 py-1 text-center">
-                {isEdit ? (
-                  <>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const payload = {
-                            days_worked: editInputs.days_worked,
-                            hours_worked: editInputs.hours_worked,
-                            bonus_count: editInputs.bonus_count,
-                            ot_hours: editInputs.ot_hours,
-                            sunday_days: editInputs.sunday_days,
-                            advance_updates: editInputs.advance_details.map((a) => ({
-                              tx_id: a.tx_id,
-                              advance_id: a.advance_id,
-                              amount: a.amount,
-                            })),
-                            savings_deposit: editInputs.savings_deposit,
-                            savings_withdraw: editInputs.savings_withdraw,
-                          };
-                          if (cycle === 'รายเดือน') {
-                            await axios.put(`/api/payroll/monthly/history/${p.id}`, payload);
-                          } else {
-                            await axios.put(`/api/payroll/semi-monthly/history/${p.id}`, payload);
-                          }
-                          setEditingKey(null);
-                          fetchHistory(month, cycle);
-                        } catch (err) {
-                          console.error(err);
-                          alert('บันทึกไม่สำเร็จ');
+                        placeholder="ฝาก"
+                        className="border w-16 p-1"
+                        value={editInputs.savings_deposit}
+                        onChange={(e) =>
+                          setEditInputs({ ...editInputs, savings_deposit: e.target.value })
                         }
-                      }}
-                      className="bg-green-500 text-white px-2 py-1 mr-1 rounded"
-                    >
-                      บันทึก
-                    </button>
-                    <button
-                      onClick={() => setEditingKey(null)}
-                      className="bg-gray-300 px-2 py-1 rounded"
-                    >
-                      ยกเลิก
-                    </button>
+                      />
+                      <input
+                        type="number"
+                        placeholder="ถอน"
+                        className="border w-16 p-1"
+                        value={editInputs.savings_withdraw}
+                        onChange={(e) =>
+                          setEditInputs({ ...editInputs, savings_withdraw: e.target.value })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {p.savings_deposit > 0 && `ฝาก ${Number(p.savings_deposit).toFixed(2)}`}
+                      {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
+                      {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
+                    </>
+                  )}
+                </td>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.deductionsTotal.toFixed(2) : Number(p.deductions_total).toFixed(2)}</td>
+                <td className="px-2 py-1" />
+              </tr>
+              <tr>
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                <td className="px-2 py-1" />
+                {(
+                  <>
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
+                    {deductionTypes.map((d) => (
+                      <td key={`${key}-${d.id}-empty`} className="px-2 py-1" />
+                    ))}
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
+                    <td className="px-2 py-1" />
                   </>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditingKey(key);
-                      setEditInputs({
-                        days_worked: p.days_worked,
-                        hours_worked: p.hours_worked,
-                        bonus_count: p.bonus_count,
-                        ot_hours: p.ot_hours,
-                        sunday_days: p.sunday_days,
-                        advance_details: p.advance_details
-                          ? p.advance_details.map((a) => ({ ...a }))
-                          : [],
-                        savings_deposit: p.savings_deposit,
-                        savings_withdraw: p.savings_withdraw,
-                        advance_total: p.advance_total || 0,
-                      });
-                    }}
-                    className="text-blue-500"
-                  >
-                    แก้ไข
-                  </button>
                 )}
-              </td>
-            </tr>
+                <td className="px-2 py-1 text-right">{isEdit ? vals.netPay.toFixed(2) : Number(p.net_pay).toFixed(2)}</td>
+                <td className="px-2 py-1 text-center">
+                  {isEdit ? (
+                    <>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const payload = {
+                              days_worked: editInputs.days_worked,
+                              hours_worked: editInputs.hours_worked,
+                              bonus_count: editInputs.bonus_count,
+                              ot_hours: editInputs.ot_hours,
+                              sunday_days: editInputs.sunday_days,
+                              advance_updates: editInputs.advance_details.map((a) => ({
+                                tx_id: a.tx_id,
+                                advance_id: a.advance_id,
+                                amount: a.amount,
+                              })),
+                              savings_deposit: editInputs.savings_deposit,
+                              savings_withdraw: editInputs.savings_withdraw,
+                            };
+                            if (cycle === 'รายเดือน') {
+                              await axios.put(`/api/payroll/monthly/history/${p.id}`, payload);
+                            } else {
+                              await axios.put(`/api/payroll/semi-monthly/history/${p.id}`, payload);
+                            }
+                            setEditingKey(null);
+                            fetchHistory(month, cycle);
+                          } catch (err) {
+                            console.error(err);
+                            alert('บันทึกไม่สำเร็จ');
+                          }
+                        }}
+                        className="bg-green-500 text-white px-2 py-1 mr-1 rounded"
+                      >
+                        บันทึก
+                      </button>
+                      <button
+                        onClick={() => setEditingKey(null)}
+                        className="bg-gray-300 px-2 py-1 rounded"
+                      >
+                        ยกเลิก
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingKey(key);
+                        setEditInputs({
+                          days_worked: p.days_worked,
+                          hours_worked: p.hours_worked,
+                          bonus_count: p.bonus_count,
+                          ot_hours: p.ot_hours,
+                          sunday_days: p.sunday_days,
+                          advance_details: p.advance_details
+                            ? p.advance_details.map((a) => ({ ...a }))
+                            : [],
+                          savings_deposit: p.savings_deposit,
+                          savings_withdraw: p.savings_withdraw,
+                          advance_total: p.advance_total || 0,
+                        });
+                      }}
+                      className="text-blue-500"
+                    >
+                      แก้ไข
+                    </button>
+                  )}
+                </td>
+              </tr>
+            </React.Fragment>
           );
         })}
       </tbody>
