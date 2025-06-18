@@ -118,6 +118,7 @@ function PayrollPage() {
       <tr className="bg-gray-100">
         <th rowSpan="2" className="px-2 py-2">รหัส</th>
         <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
+        <th rowSpan="2" className="px-2 py-2">รายการ</th>
         <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
         {showDeduction && (
           <th
@@ -165,6 +166,7 @@ function PayrollPage() {
             <tr className="border-t">
               <td rowSpan="3" className="px-2 py-1 text-center">{p.employee_id}</td>
               <td rowSpan="3" className="px-2 py-1">{p.name}</td>
+              <td className="px-2 py-1 font-semibold text-center bg-gray-50">รายได้</td>
               <td className="px-2 py-1 text-center">{p.days_worked}</td>
               <td className="px-2 py-1 text-center">{p.hours_worked}</td>
               <td className="px-2 py-1 text-center">{p.bonus_count}</td>
@@ -191,6 +193,7 @@ function PayrollPage() {
               <td className="px-2 py-1" />
             </tr>
             <tr>
+              <td className="px-2 py-1 font-semibold text-center bg-gray-50">รายการหัก</td>
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
@@ -313,6 +316,7 @@ function PayrollPage() {
               <td className="px-2 py-1" />
             </tr>
             <tr>
+              <td className="px-2 py-1 font-semibold text-center bg-gray-50">รับสุทธิ</td>
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />
               <td className="px-2 py-1" />

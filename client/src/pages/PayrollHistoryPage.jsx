@@ -103,6 +103,7 @@ function PayrollHistoryPage() {
         <th rowSpan="2" className="px-2 py-2">รหัส</th>
         <th rowSpan="2" className="px-2 py-2 text-left">ชื่อพนักงาน</th>
         {showPeriod && <th rowSpan="2" className="px-2 py-2">รอบ</th>}
+        <th rowSpan="2" className="px-2 py-2">รายการ</th>
         <th colSpan="9" className="px-2 py-2 text-center">รายได้</th>
         <th colSpan={5 + deductionTypes.length} className="px-2 py-2 text-center">รายหัก</th>
         <th rowSpan="2" className="px-2 py-2">รับสุทธิ</th>
@@ -152,6 +153,7 @@ function PayrollHistoryPage() {
                     {p.period === 'first' ? '1-15' : '16-สิ้นเดือน'}
                   </td>
                 )}
+                <td className="px-2 py-1 font-semibold text-center bg-gray-50">รายได้</td>
                 <td className="px-2 py-1 text-center">
                   {isEdit ? (
                     <input
@@ -231,6 +233,7 @@ function PayrollHistoryPage() {
                 <td className="px-2 py-1" />
               </tr>
               <tr>
+                <td className="px-2 py-1 font-semibold text-center bg-gray-50">รายการหัก</td>
                 <td className="px-2 py-1" />
                 <td className="px-2 py-1" />
                 <td className="px-2 py-1" />
@@ -329,6 +332,7 @@ function PayrollHistoryPage() {
                 <td className="px-2 py-1" />
               </tr>
               <tr>
+                <td className="px-2 py-1 font-semibold text-center bg-gray-50">รับสุทธิ</td>
                 <td className="px-2 py-1" />
                 <td className="px-2 py-1" />
                 <td className="px-2 py-1" />
