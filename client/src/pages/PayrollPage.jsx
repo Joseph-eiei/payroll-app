@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const TABLE_ROW_HEIGHT = 50; // px
+const fixedRowClass = "payroll-fixed-row";
+
 function PayrollPage() {
   const [payroll, setPayroll] = useState([]);
   const [error, setError] = useState('');
@@ -115,7 +118,6 @@ function PayrollPage() {
 
   const renderIncomeHeader = (showDeduction) => (
     <tr className="bg-gray-100">
-      <th className="px-2 py-2">รหัส</th>
       <th className="px-2 py-2 text-left">ชื่อพนักงาน</th>
       <th className="px-2 py-2">วันทำงาน</th>
       <th className="px-2 py-2">ชั่วโมง</th>
@@ -126,28 +128,12 @@ function PayrollPage() {
       <th className="px-2 py-2">อาทิตย์(วัน)</th>
       <th className="px-2 py-2">ค่าอาทิตย์</th>
       <th className="px-2 py-2">รวมรายได้</th>
-      {showDeduction && (
-        <>
-          <th colSpan={5 + deductionTypes.length} />
-          <th />
-          <th />
-        </>
-      )}
-      {!showDeduction && (
-        <>
-          <th />
-          <th />
-          <th />
-        </>
-      )}
+      <th colSpan={10} />
     </tr>
   );
 
   const renderDeductionHeader = (showDeduction) => (
     <tr className="bg-gray-100">
-      <th />
-      <th />
-      <th colSpan="9" className="text-center">รายหัก</th>
       {showDeduction && (
         <>
           <th className="px-2 py-2">ค่าน้ำ</th>
@@ -160,15 +146,7 @@ function PayrollPage() {
           <th className="px-2 py-2">เงินเบิก</th>
           <th className="px-2 py-2">เงินเก็บสะสม</th>
           <th className="px-2 py-2">รวมยอดหัก</th>
-          <th />
-          <th />
-        </>
-      )}
-      {!showDeduction && (
-        <>
-          <th className="px-2 py-2">รายหัก</th>
-          <th />
-          <th />
+          <th colSpan={12}/>
         </>
       )}
     </tr>
@@ -176,196 +154,156 @@ function PayrollPage() {
 
   const renderNetHeader = (showDeduction) => (
     <tr className="bg-gray-100">
-      <th />
-      <th />
-      <th colSpan={9 + (showDeduction ? 5 + deductionTypes.length : 1)} />
       <th className="px-2 py-2">รับสุทธิ</th>
-      <th className="px-2 py-2" />
+      <th colSpan={20} />
     </tr>
   );
 
   const renderPayrollTable = (data, showDeduction = true) => (
-    <table className="min-w-full bg-white shadow rounded text-sm">
-      <tbody>
+    <table className="min-w-full bg-white shadow rounded text-sm border border-gray-300">
+      <style>
+        {`
+          .${fixedRowClass} {
+            height: ${TABLE_ROW_HEIGHT}px;
+            min-height: ${TABLE_ROW_HEIGHT}px;
+          }
+          .payroll-bordered th, .payroll-bordered td {
+            border: 1px solid #d1d5db;
+          }
+        `}
+      </style>
+      <tbody className="payroll-bordered">
         {data.map((p) => (
           <React.Fragment key={p.employee_id}>
             {renderIncomeHeader(showDeduction)}
-            <tr className="border-t">
-              <td rowSpan="5" className="px-2 py-1 text-center">{p.employee_id}</td>
+            <tr className={`border-t ${fixedRowClass}`}>
               <td rowSpan="5" className="px-2 py-1">{p.name}</td>
               <td className="px-2 py-1 text-center">{p.days_worked}</td>
               <td className="px-2 py-1 text-center">{p.hours_worked}</td>
               <td className="px-2 py-1 text-center">{p.bonus_count}</td>
-              <td className="px-2 py-1 text-right">{p.base_pay.toFixed(2)}</td>
+              <td className="px-2 py-1 text-center">{p.base_pay.toFixed(2)}</td>
               <td className="px-2 py-1 text-center">{p.ot_hours}</td>
-              <td className="px-2 py-1 text-right">{p.ot_pay.toFixed(2)}</td>
+              <td className="px-2 py-1 text-center">{p.ot_pay.toFixed(2)}</td>
               <td className="px-2 py-1 text-center">{p.sunday_days}</td>
-              <td className="px-2 py-1 text-right">{p.sunday_pay.toFixed(2)}</td>
-              <td className="px-2 py-1 text-right">{p.total_income.toFixed(2)}</td>
-              {showDeduction && (
-                <>
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                  {deductionTypes.map((d) => (
-                    <td key={`${p.employee_id}-${d.id}-blank`} className="px-2 py-1" />
-                  ))}
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                </>
-              )}
-              {!showDeduction && <td className="px-2 py-1" />}
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
+              <td className="px-2 py-1 text-center">{p.sunday_pay.toFixed(2)}</td>
+              <td className="px-2 py-1 text-center">{p.total_income.toFixed(2)}</td>
             </tr>
             {renderDeductionHeader(showDeduction)}
-            <tr>
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
               {showDeduction && (
-                <>
-                  <td className="px-2 py-1 text-right">{p.water_deduction.toFixed(2)}</td>
-                  <td className="px-2 py-1 text-right">{p.electric_deduction.toFixed(2)}</td>
-                  {deductionTypes.map((d) => {
-                    const detail = p.deduction_details.find((dd) => dd.name === d.name);
-                    return (
-                      <td key={`${p.employee_id}-${d.id}`} className="px-2 py-1 text-right">
-                        {detail ? detail.amount.toFixed(2) : '0.00'}
-                      </td>
-                    );
-                  })}
-                  <td className="px-2 py-1">
-                    {p.advances && p.advances.length > 0 ? (
-                      p.advances.map((a) => (
-                        <div key={a.id} className="mb-1">
-                          <div className="text-xs">{a.name}</div>
-                          <input
-                            type="number"
-                            className="border p-1 w-20"
-                            value={advanceInputs[p.employee_id]?.[a.id]?.amount || ''}
-                            onChange={(e) =>
-                              setAdvanceInputs((prev) => ({
-                                ...prev,
-                                [p.employee_id]: {
-                                  ...(prev[p.employee_id] || {}),
-                                  [a.id]: {
-                                    ...(prev[p.employee_id]?.[a.id] || {}),
-                                    amount: e.target.value,
+                <tr className={fixedRowClass}>
+                  <>
+                    <td className="px-2 py-1 text-center">{p.water_deduction.toFixed(2)}</td>
+                    <td className="px-2 py-1 text-center">{p.electric_deduction.toFixed(2)}</td>
+                    {deductionTypes.map((d) => {
+                      const detail = p.deduction_details.find((dd) => dd.name === d.name);
+                      return (
+                        <td key={`${p.employee_id}-${d.id}`} className="px-2 py-1 text-center">
+                          {detail ? detail.amount.toFixed(2) : '0.00'}
+                        </td>
+                      );
+                    })}
+                    <td className="px-2 py-1 text-center">
+                      {p.advances && p.advances.length > 0 ? (
+                        p.advances.map((a) => (
+                          <div key={a.id} className="mb-1">
+                            <div className="text-xs">{a.name}</div>
+                            <input
+                              type="number"
+                              className="border p-1 w-20"
+                              value={advanceInputs[p.employee_id]?.[a.id]?.amount || ''}
+                              onChange={(e) =>
+                                setAdvanceInputs((prev) => ({
+                                  ...prev,
+                                  [p.employee_id]: {
+                                    ...(prev[p.employee_id] || {}),
+                                    [a.id]: {
+                                      ...(prev[p.employee_id]?.[a.id] || {}),
+                                      amount: e.target.value,
+                                    },
                                   },
-                                },
-                              }))
-                            }
-                          />
-                          <input
-                            type="text"
-                            className="border p-1 w-20 mt-1"
-                            placeholder="หมายเหตุ"
-                            value={advanceInputs[p.employee_id]?.[a.id]?.remark || ''}
-                            onChange={(e) =>
-                              setAdvanceInputs((prev) => ({
-                                ...prev,
-                                [p.employee_id]: {
-                                  ...(prev[p.employee_id] || {}),
-                                  [a.id]: {
-                                    ...(prev[p.employee_id]?.[a.id] || {}),
-                                    remark: e.target.value,
+                                }))
+                              }
+                            />
+                            <input
+                              type="text"
+                              className="border p-1 w-20 mt-1"
+                              placeholder="หมายเหตุ"
+                              value={advanceInputs[p.employee_id]?.[a.id]?.remark || ''}
+                              onChange={(e) =>
+                                setAdvanceInputs((prev) => ({
+                                  ...prev,
+                                  [p.employee_id]: {
+                                    ...(prev[p.employee_id] || {}),
+                                    [a.id]: {
+                                      ...(prev[p.employee_id]?.[a.id] || {}),
+                                      remark: e.target.value,
+                                    },
                                   },
-                                },
-                              }))
-                            }
-                          />
-                          <div className="text-xs">
-                            คงเหลือ {(
-                              a.total_amount -
-                              (parseFloat(advanceInputs[p.employee_id]?.[a.id]?.amount) || 0)
-                            ).toFixed(2)}
+                                }))
+                              }
+                            />
+                            <div className="text-xs">
+                              คงเหลือ {(
+                                a.total_amount -
+                                (parseFloat(advanceInputs[p.employee_id]?.[a.id]?.amount) || 0)
+                              ).toFixed(2)}
+                            </div>
                           </div>
-                        </div>
-                      ))
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className="px-2 py-1">
-                    <div className="mb-1 text-xs whitespace-pre-line">
-                      {(() => {
-                        const withdraw = savingInputs[p.employee_id]?.withdraw;
-                        const depositAmt = withdraw ? 0 : p.savings_monthly_amount;
-                        const newBal = withdraw ? 0 : p.savings_balance + depositAmt;
-                        return `ฝาก ${depositAmt.toFixed(2)}\nยอดสะสม ${newBal.toFixed(2)}`;
-                      })()}
-                    </div>
-                    <label className="text-xs mr-2">
+                        ))
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td className="px-2 py-1">
+                      <div className="mb-1 text-xs whitespace-pre-line">
+                        {(() => {
+                          const withdraw = savingInputs[p.employee_id]?.withdraw;
+                          const depositAmt = withdraw ? 0 : p.savings_monthly_amount;
+                          const newBal = withdraw ? 0 : p.savings_balance + depositAmt;
+                          return `ฝาก ${depositAmt.toFixed(2)}\nยอดสะสม ${newBal.toFixed(2)}`;
+                        })()}
+                      </div>
+                      <label className="text-xs mr-2">
+                        <input
+                          className='mr-1'
+                          type="checkbox"
+                          checked={savingInputs[p.employee_id]?.withdraw || false}
+                          onChange={(e) =>
+                            setSavingInputs((prev) => ({
+                              ...prev,
+                              [p.employee_id]: {
+                                ...(prev[p.employee_id] || {}),
+                                withdraw: e.target.checked,
+                              },
+                            }))
+                          }
+                        />
+                        ถอน
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={savingInputs[p.employee_id]?.withdraw || false}
+                        type="text"
+                        className="border p-1 w-20"
+                        placeholder="หมายเหตุ"
+                        value={savingInputs[p.employee_id]?.remark || ''}
                         onChange={(e) =>
                           setSavingInputs((prev) => ({
                             ...prev,
                             [p.employee_id]: {
                               ...(prev[p.employee_id] || {}),
-                              withdraw: e.target.checked,
+                              remark: e.target.value,
                             },
                           }))
                         }
                       />
-                      ถอน
-                    </label>
-                    <input
-                      type="text"
-                      className="border p-1 w-20"
-                      placeholder="หมายเหตุ"
-                      value={savingInputs[p.employee_id]?.remark || ''}
-                      onChange={(e) =>
-                        setSavingInputs((prev) => ({
-                          ...prev,
-                          [p.employee_id]: {
-                            ...(prev[p.employee_id] || {}),
-                            remark: e.target.value,
-                          },
-                        }))
-                      }
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-right">{p.deductions_total.toFixed(2)}</td>
-                </>
+                    </td>
+                    <td className="px-2 py-1 text-center">{p.deductions_total.toFixed(2)}</td>
+                  </>
+                </tr>
               )}
-              {!showDeduction && <td className="px-2 py-1" />}
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-            </tr>
+            
             {renderNetHeader(showDeduction)}
-            <tr>
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              <td className="px-2 py-1" />
-              {showDeduction && (
-                <>
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                  {deductionTypes.map((d) => (
-                    <td key={`${p.employee_id}-${d.id}-empty`} className="px-2 py-1" />
-                  ))}
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                  <td className="px-2 py-1" />
-                </>
-              )}
-              {!showDeduction && <td className="px-2 py-1" />}
-              <td className="px-2 py-1 text-right">{computeNetPay(p)}</td>
+            <tr className={fixedRowClass}>
+              <td className="px-2 py-1 text-center font-bold">{computeNetPay(p)}</td>
               <td className="px-2 py-1 text-center">
                 <button
                   onClick={() => handleConfirm(p.employee_id)}
@@ -375,6 +313,9 @@ function PayrollPage() {
                 </button>
               </td>
             </tr>
+            {!showDeduction && (
+              <tr />
+          )}
           </React.Fragment>
         ))}
       </tbody>
