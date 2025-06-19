@@ -327,6 +327,8 @@ exports.recordMonthlyPayroll = async (req, res) => {
   const payMonth = month || new Date().toISOString().slice(0, 7);
   const monthStart = new Date(`${payMonth}-01`);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+  const payDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+  const payDateStr = payDate.toISOString().slice(0, 10);
 
   try {
     const empRes = await pool.query('SELECT * FROM Employees WHERE id=$1', [employeeId]);
@@ -362,12 +364,12 @@ exports.recordMonthlyPayroll = async (req, res) => {
       advanceTotal += amt;
       await pool.query(
         'UPDATE AdvanceLoans SET total_amount = total_amount - $1, updated_at=$3 WHERE id = $2',
-        [amt, ad.id, `${payMonth}-01`]
+        [amt, ad.id, payDateStr]
       );
       await pool.query(
         `INSERT INTO AdvanceTransactions (advance_id, amount, transaction_date, remark)
          VALUES ($1, $2, $3, $4)`,
-        [ad.id, -amt, `${payMonth}-01`, ad.remark || '']
+        [ad.id, -amt, payDateStr, ad.remark || '']
       );
     }
 
@@ -388,7 +390,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
         await pool.query(
           `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
            VALUES ($1, $2, $3, false, $4)`,
-          [employeeId, bal, `${payMonth}-01`, savingsRemark]
+          [employeeId, bal, payDateStr, savingsRemark]
         );
       }
     } else {
@@ -397,7 +399,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
         await pool.query(
           `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
            VALUES ($1, $2, $3, true, $4)`,
-          [employeeId, savingsMonthly, `${payMonth}-01`, savingsRemark]
+          [employeeId, savingsMonthly, payDateStr, savingsRemark]
         );
       }
     }
@@ -418,7 +420,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
       )`,
       [
         emp.id,
-        `${payMonth}-01`,
+        payDateStr,
         parseFloat(emp.daily_wage),
         details.days,
         details.hours,
@@ -458,6 +460,8 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
   const monthStart = new Date(`${payMonth}-01`);
   const midDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), 16);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+  const payDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+  const payDateStr = payDate.toISOString().slice(0, 10);
   const rangeStart = per === 'first' ? monthStart : midDate;
   const rangeEnd = per === 'first' ? midDate : monthEnd;
 
@@ -496,12 +500,12 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
       advanceTotal += amt;
       await pool.query(
         'UPDATE AdvanceLoans SET total_amount = total_amount - $1, updated_at=$3 WHERE id = $2',
-        [amt, ad.id, `${payMonth}-01`]
+        [amt, ad.id, payDateStr]
       );
       await pool.query(
         `INSERT INTO AdvanceTransactions (advance_id, amount, transaction_date, remark)
          VALUES ($1, $2, $3, $4)`,
-        [ad.id, -amt, `${payMonth}-01`, ad.remark || '']
+        [ad.id, -amt, payDateStr, ad.remark || '']
       );
     }
 
@@ -522,7 +526,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
         await pool.query(
           `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
            VALUES ($1, $2, $3, false, $4)`,
-          [employeeId, bal, `${payMonth}-01`, savingsRemark]
+          [employeeId, bal, payDateStr, savingsRemark]
         );
       }
     } else {
@@ -531,7 +535,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
         await pool.query(
           `INSERT INTO SavingsTransactions (employee_id, amount, transaction_date, is_deposit, remark)
            VALUES ($1, $2, $3, true, $4)`,
-          [employeeId, savingsMonthly, `${payMonth}-01`, savingsRemark]
+          [employeeId, savingsMonthly, payDateStr, savingsRemark]
         );
       }
     }
@@ -552,7 +556,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
       )`,
       [
         emp.id,
-        `${payMonth}-01`,
+        payDateStr,
         per,
         parseFloat(emp.daily_wage),
         part.days,
