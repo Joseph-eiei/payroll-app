@@ -217,7 +217,7 @@ function PayrollPage() {
                         </td>
                       );
                     })}
-                    <td className="px-2 py-1 text-center">
+                    <td className="px-2 py-1">
                       {p.advances && p.advances.length > 0 ? (
                         p.advances.map((a) => (
                           <div key={a.id} className="mb-1">
@@ -225,6 +225,7 @@ function PayrollPage() {
                             <input
                               type="number"
                               className="border p-1 w-20"
+                              placeholder="จำนวน(฿)"
                               value={advanceInputs[p.employee_id]?.[a.id]?.amount || ''}
                               onChange={(e) =>
                                 setAdvanceInputs((prev) => ({
