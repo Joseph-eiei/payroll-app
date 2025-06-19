@@ -33,6 +33,25 @@ function PayrollPage() {
     return (p.net_pay - advTotal - deposit + withdrawAmt).toFixed(2);
   };
 
+  const computeDeductionTotal = (p) => {
+    const advs = advanceInputs[p.employee_id] || {};
+    const advTotal = Object.values(advs).reduce(
+      (sum, val) => sum + (parseFloat(val.amount) || 0),
+      0,
+    );
+    const sav = savingInputs[p.employee_id] || {};
+    const deposit = sav.withdraw ? 0 : p.savings_monthly_amount;
+    let withdrawAmt = 0;
+    if (sav.withdraw) {
+      withdrawAmt = p.savings_balance;
+      const payDate = new Date(`${month}-01`);
+      if (payDate.getMonth() === 11 && p.savings_balance >= 5500) {
+        withdrawAmt += 1375;
+      }
+    }
+    return (p.deductions_total + advTotal + deposit - withdrawAmt).toFixed(2);
+  };
+
   const fetchPayroll = async (m) => {
     try {
       const res = await axios.get(`/api/payroll/monthly?month=${m}`);
@@ -312,7 +331,7 @@ function PayrollPage() {
                         }
                       />
                     </td>
-                    <td className="px-2 py-1 text-center text-red-800 font-bold">{p.deductions_total.toFixed(2)}</td>
+                    <td className="px-2 py-1 text-center text-red-800 font-bold">{computeDeductionTotal(p)}</td>
                   </>
                 </tr>
               )}
