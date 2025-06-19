@@ -324,7 +324,7 @@ function EmployeeListPage() {
                   </div>
                    <div>
                     <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">วันที่เริ่มงาน</label>
-                    <input type="date" name="start_date" id="start_date" value={formData.start_date} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
+                    <input type="date" lang="en-GB" name="start_date" id="start_date" value={formData.start_date} onChange={handleFormChange} className="text-gray-900 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-2" />
                   </div>
                   <div>
                     <label htmlFor="water_address" className="block text-sm font-medium text-gray-700">ที่อยู่น้ำ</label>
