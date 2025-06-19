@@ -160,6 +160,7 @@ function PayrollHistoryPage() {
       amt = Math.min(amt, DEDUCTION_CAP);
       dedType += amt;
     });
+    dedType = Math.min(dedType, DEDUCTION_CAP);
     const otherDed = dedType + advTotal + savingsDep;
     const deductionsTotal =
       (parseFloat(rec.water_deduction) || 0) +
