@@ -26,6 +26,7 @@ function DeductionManagementPage() {
       const waterRes = await axios.get('/api/deductions/water');
       const waterData = waterRes.data.map((c) => ({
         ...c,
+        bill_image: null,
         billFile: null,
         billPreview: null,
         water_charge: '',
