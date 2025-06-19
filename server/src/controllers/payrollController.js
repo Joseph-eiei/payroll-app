@@ -327,7 +327,7 @@ exports.recordMonthlyPayroll = async (req, res) => {
   const payMonth = month || new Date().toISOString().slice(0, 7);
   const monthStart = new Date(`${payMonth}-01`);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
-  const payDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+  const payDate = new Date(Date.UTC(monthStart.getFullYear(), monthStart.getMonth() + 1, 0));
   const payDateStr = payDate.toISOString().slice(0, 10);
 
   try {
@@ -460,7 +460,7 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
   const monthStart = new Date(`${payMonth}-01`);
   const midDate = new Date(monthStart.getFullYear(), monthStart.getMonth(), 16);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
-  const payDate = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+  const payDate = new Date(Date.UTC(monthStart.getFullYear(), monthStart.getMonth() + 1, 0));
   const payDateStr = payDate.toISOString().slice(0, 10);
   const rangeStart = per === 'first' ? monthStart : midDate;
   const rangeEnd = per === 'first' ? midDate : monthEnd;
