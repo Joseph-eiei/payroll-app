@@ -47,8 +47,8 @@ function AdvanceHistoryPage() {
   }, {});
 
   const list = Object.values(grouped);
-  const inProcess = list.filter(a => a.total_amount !== 0);
-  const finished = list.filter(a => a.total_amount === 0);
+  const inProcess = list.filter(a => a.total_amount != 0);
+  const finished = list.filter(a => a.total_amount == 0);
 
   return (
     <div className="p-6 text-black">

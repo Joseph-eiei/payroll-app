@@ -58,7 +58,7 @@ function DeductionManagementPage() {
   const fetchAdvances = async () => {
     try {
       const res = await axios.get('/api/advances');
-      const active = res.data.filter(a => a.total_amount !== 0);
+      const active = res.data.filter(a => a.total_amount != 0);
       setAdvances(active.map(a => ({
         ...a,
         addAmount: '',
