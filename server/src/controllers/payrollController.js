@@ -852,6 +852,7 @@ exports.updateMonthlyRecord = async (req, res) => {
       amount = Math.min(amount, DEDUCTION_CAP);
       otherDed += amount;
     }
+    otherDed = Math.min(otherDed, DEDUCTION_CAP);
 
     const { rows: adv } = await pool.query(
       `SELECT -t.amount AS amount
@@ -1032,6 +1033,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
       amount = Math.min(amount, DEDUCTION_CAP);
       otherDed += amount;
     }
+    otherDed = Math.min(otherDed, DEDUCTION_CAP);
 
     const { rows: adv } = await pool.query(
       `SELECT -t.amount AS amount
@@ -1097,6 +1099,7 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
         amount = Math.min(amount, DEDUCTION_CAP);
         otherDed2 += amount;
       }
+      otherDed2 = Math.min(otherDed2, DEDUCTION_CAP);
 
       const { rows: adv2 } = await pool.query(
         `SELECT -t.amount AS amount
