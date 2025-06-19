@@ -97,8 +97,8 @@ function AttendancePage() {
       });
       console.log('Attendance submitted successfully:', response.data);
       alert('ข้อมูลการลงเวลาถูกส่งเรียบร้อย');
-      // Optionally clear the form after successful submission
-      // handleClearForm();
+      // Clear the form after successful submission
+      handleClearForm();
     } catch (error) {
       console.error('Error submitting attendance:', error);
       alert(`เกิดข้อผิดพลาดในการส่งข้อมูล: ${error.response?.data?.msg || error.message}`);
