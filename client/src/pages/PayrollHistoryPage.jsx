@@ -485,9 +485,15 @@ function PayrollHistoryPage() {
                           {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
                           {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
                           {p.savings_remark && ` หมายเหตุ: ${p.savings_remark}`}
-                          {typeof savingsBalances[p.id] === 'number' && (
+                          {typeof savingsBalances[p.id] === 'number' && p.savings_withdraw === 0 && (
                             <span className="block text-xs">ยอดสะสม {(savingsBalances[p.id] + (parseFloat(p.savings_deposit) || 0) - (parseFloat(p.savings_withdraw) || 0)).toFixed(2)}</span>
                           )}
+                          {typeof savingsBalances[p.id] === 'number' &&
+                            p.savings_withdraw > 0 &&
+                            Math.abs(p.savings_withdraw - savingsBalances[p.id] - 1375) < 0.01 && (
+                              <span className="block text-2xs text-green-600">(ได้โบนัส 25% มูลค่า 1,375)</span>
+                            )
+                          }
                         </>
                       )}
                     </td>
