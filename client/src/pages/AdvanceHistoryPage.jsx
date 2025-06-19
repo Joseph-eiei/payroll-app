@@ -47,6 +47,8 @@ function AdvanceHistoryPage() {
   }, {});
 
   const list = Object.values(grouped);
+  const inProcess = list.filter(a => a.total_amount !== 0);
+  const finished = list.filter(a => a.total_amount === 0);
 
   return (
     <div className="p-6 text-black">
@@ -57,7 +59,47 @@ function AdvanceHistoryPage() {
           <option key={e.id} value={e.id}>{`${e.first_name} ${e.last_name}`}</option>
         ))}
       </select>
-      {list.map(adv => (
+      {inProcess.length > 0 && (
+        <h3 className="text-lg font-semibold mb-2">in process</h3>
+      )}
+      {inProcess.map(adv => (
+        <div key={adv.id} className="mb-6 bg-white shadow p-4 rounded">
+          <div className="font-semibold mb-2">{adv.name} - ยอดคงเหลือ {adv.total_amount}</div>
+          {adv.transactions.length > 0 ? (
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-2 py-1 text-left">วันที่</th>
+                  <th className="px-2 py-1 text-left">ประเภท</th>
+                  <th className="px-2 py-1 text-left">จำนวน</th>
+                  <th className="px-2 py-1 text-left">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adv.transactions.map(t => {
+                  const amt = Number(t.amount);
+                  const isAdd = amt >= 0;
+                  return (
+                    <tr key={t.id} className="border-t">
+                      <td className="px-2 py-1">{t.date}</td>
+                      <td className="px-2 py-1">{isAdd ? 'เบิกเพิ่ม' : 'หักเงินเบิก'}</td>
+                      <td className={`px-2 py-1 ${isAdd ? 'text-red-600' : 'text-green-600'}`}>{t.amount}</td>
+                      <td className="px-2 py-1">{t.remark}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-sm text-gray-500">ไม่มีประวัติ</div>
+          )}
+        </div>
+      ))}
+
+      {finished.length > 0 && (
+        <h3 className="text-lg font-semibold mt-4 mb-2">finished</h3>
+      )}
+      {finished.map(adv => (
         <div key={adv.id} className="mb-6 bg-white shadow p-4 rounded">
           <div className="font-semibold mb-2">{adv.name} - ยอดคงเหลือ {adv.total_amount}</div>
           {adv.transactions.length > 0 ? (
