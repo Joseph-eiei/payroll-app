@@ -412,7 +412,7 @@ function DeductionManagementPage() {
                 <input type="number" value={a.addAmount} onChange={(e)=>handleAdvanceChange(idx,'addAmount',e.target.value)} className="border p-1 w-24" />
               </td>
               <td className="px-4 py-2">
-                <input type="date" lang="en-GB" value={a.addDate} onChange={(e)=>handleAdvanceChange(idx,'addDate',e.target.value)} className="border p-1" />
+                <input type="date" lang="en" value={a.addDate} onChange={(e)=>handleAdvanceChange(idx,'addDate',e.target.value)} className="border p-1" />
               </td>
               <td className="px-4 py-2">
                 <input type="text" value={a.remark} onChange={(e)=>handleAdvanceChange(idx,'remark',e.target.value)} className="border p-1" />

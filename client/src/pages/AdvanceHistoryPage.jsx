@@ -60,7 +60,7 @@ function AdvanceHistoryPage() {
         ))}
       </select>
       {inProcess.length > 0 && (
-        <h3 className="text-lg font-semibold mb-2">in process</h3>
+        <h3 className="text-2xl font-semibold mb-2 text-red-600">กำลังดำเนินการ</h3>
       )}
       {inProcess.map(adv => (
         <div key={adv.id} className="mb-6 bg-white shadow p-4 rounded">
@@ -95,9 +95,9 @@ function AdvanceHistoryPage() {
           )}
         </div>
       ))}
-
+      <hr className="my-6" />
       {finished.length > 0 && (
-        <h3 className="text-lg font-semibold mt-4 mb-2">finished</h3>
+        <h3 className="text-2xl font-semibold mt-4 mb-2 text-green-600">เสร็จสิ้น</h3>
       )}
       {finished.map(adv => (
         <div key={adv.id} className="mb-6 bg-white shadow p-4 rounded">
