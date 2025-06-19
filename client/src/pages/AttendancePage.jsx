@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { isoToDDMMYYYY, ddmmyyyyToIso } from '../utils/date';
 
 function AttendancePage() {
   const [siteName, setSiteName] = useState('');
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().slice(0, 10));
+  const initialIso = new Date().toISOString().slice(0, 10);
+  const [attendanceDate, setAttendanceDate] = useState(initialIso);
+  const [attendanceDateDisplay, setAttendanceDateDisplay] = useState(isoToDDMMYYYY(initialIso));
   const [siteSupervisor, setSiteSupervisor] = useState('');
   const [supervisorCheckIn, setSupervisorCheckIn] = useState('');
   const [supervisorCheckOut, setSupervisorCheckOut] = useState('');
@@ -107,7 +110,9 @@ function AttendancePage() {
 
   const handleClearForm = () => {
     setSiteName('');
-    setAttendanceDate(new Date().toISOString().slice(0,10));
+    const iso = new Date().toISOString().slice(0,10);
+    setAttendanceDate(iso);
+    setAttendanceDateDisplay(isoToDDMMYYYY(iso));
     setSiteSupervisor('');
     setSupervisorCheckIn('');
     setSupervisorCheckOut('');
@@ -149,11 +154,15 @@ function AttendancePage() {
             <div>
               <label htmlFor="attendanceDate" className="block text-sm font-medium text-gray-700 mb-1">วันที่</label>
               <input
-                type="date"
+                type="text"
                 id="attendanceDate"
-                lang="en-GB"
-                value={attendanceDate}
-                onChange={(e) => setAttendanceDate(e.target.value)}
+                value={attendanceDateDisplay}
+                onChange={(e) => {
+                  setAttendanceDateDisplay(e.target.value);
+                  setAttendanceDate(ddmmyyyyToIso(e.target.value));
+                }}
+                placeholder="dd/mm/yyyy"
+                pattern="\d{2}/\d{2}/\d{4}"
                 className="text-gray-900 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                 required
               />
