@@ -231,7 +231,7 @@ function AttendanceReviewPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">วันที่</label>
-                    <input type="date" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2 w-full" required />
+                    <input type="date" lang="en-GB" value={editData.attendanceDate} onChange={(e)=>handleEditChange('attendanceDate', e.target.value)} className="border p-2 w-full" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
