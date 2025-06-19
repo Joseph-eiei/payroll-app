@@ -12,6 +12,7 @@ function PayrollHistoryPage() {
   const [deductionTypes, setDeductionTypes] = useState([]);
   const [error, setError] = useState('');
   const [editingKey, setEditingKey] = useState(null);
+  const [savingsBalances, setSavingsBalances] = useState({});
   const [editInputs, setEditInputs] = useState({
     advance_details: [],
     savings_deposit: 0,
@@ -30,6 +31,7 @@ function PayrollHistoryPage() {
           return a.employee_id - b.employee_id;
         });
         setRecords(sorted);
+        fetchBalances(sorted);
       } else {
         const p = period === '16-สิ้นเดือน' ? 'second' : 'first';
         const res = await axios.get(
@@ -44,10 +46,49 @@ function PayrollHistoryPage() {
           return a.employee_id - b.employee_id;
         });
         setRecords(sorted);
+        fetchBalances(sorted);
       }
     } catch (err) {
       console.error(err);
       setError('ไม่สามารถโหลดข้อมูล');
+    }
+  };
+
+  const fetchBalances = async (recs) => {
+    try {
+      const ids = [...new Set(recs.map((r) => r.employee_id))];
+      const result = {};
+      for (const id of ids) {
+        const { data } = await axios.get(`/api/savings/history/${id}`);
+        const trans = data
+          .map((t) => ({
+            date: new Date(t.transaction_date),
+            amt: parseFloat(t.amount),
+            dep: t.is_deposit,
+          }))
+          .sort((a, b) => a.date - b.date);
+        let running = 0;
+        const balancesByDate = [];
+        trans.forEach((t) => {
+          running += t.dep ? t.amt : -t.amt;
+          balancesByDate.push({ date: t.date, bal: running });
+        });
+        recs
+          .filter((r) => r.employee_id === id)
+          .forEach((r) => {
+            const payDate = new Date(r.pay_month);
+            let after = 0;
+            balancesByDate.forEach((b) => {
+              if (b.date <= payDate) after = b.bal;
+            });
+            const dep = parseFloat(r.savings_deposit) || 0;
+            const wit = parseFloat(r.savings_withdraw) || 0;
+            result[r.id] = parseFloat((after - dep + wit).toFixed(2));
+          });
+      }
+      setSavingsBalances(result);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -111,9 +152,13 @@ function PayrollHistoryPage() {
         : rec.savings_withdraw || 0;
     const totalIncome = basePay + otPay + sunPay + savingsWd;
     const baseForDeduction = basePay + otPay + otherBaseOt;
+    const DEDUCTION_CAP = 750;
     let dedType = 0;
     deductionTypes.forEach((d) => {
-      dedType += (baseForDeduction * (parseFloat(d.rate) || 0)) / 100;
+      const rate = parseFloat(d.rate) || 0;
+      let amt = (baseForDeduction * rate) / 100;
+      amt = Math.min(amt, DEDUCTION_CAP);
+      dedType += amt;
     });
     const otherDed = dedType + advTotal + savingsDep;
     const deductionsTotal =
@@ -121,10 +166,14 @@ function PayrollHistoryPage() {
       (parseFloat(rec.electric_deduction) || 0) +
       otherDed;
     const netPay = totalIncome - (includeDeduction ? deductionsTotal : 0);
-    const details = deductionTypes.map((d) => ({
-      name: d.name,
-      amount: (baseForDeduction * (parseFloat(d.rate) || 0)) / 100,
-    }));
+    const details = deductionTypes.map((d) => {
+      const rate = parseFloat(d.rate) || 0;
+      let amt = (baseForDeduction * rate) / 100;
+      amt = Math.min(amt, DEDUCTION_CAP);
+      return { name: d.name, amount: amt };
+    });
+    const baseBal = savingsBalances[rec.id] || 0;
+    const savingsBalance = baseBal + savingsDep - savingsWd;
     return {
       basePay,
       otPay,
@@ -133,6 +182,7 @@ function PayrollHistoryPage() {
       deductionsTotal,
       netPay,
       details,
+      savingsBalance,
     };
   };
 
@@ -336,8 +386,19 @@ function PayrollHistoryPage() {
                                     className="border w-16 p-1"
                                     value={a.amount}
                                     onChange={(e) => {
+                                      const val = e.target.value;
+                                      const num = parseFloat(val) || 0;
                                       const list = [...editInputs.advance_details];
-                                      list[idx].amount = e.target.value;
+                                      const base =
+                                        list[idx].base_remaining !== undefined
+                                          ? list[idx].base_remaining
+                                          : parseFloat(list[idx].remaining) +
+                                            parseFloat(list[idx].amount || 0);
+                                      list[idx] = {
+                                        ...list[idx],
+                                        amount: val,
+                                        remaining: base - num,
+                                      };
                                       setEditInputs({ ...editInputs, advance_details: list });
                                     }}
                                   />
@@ -385,7 +446,7 @@ function PayrollHistoryPage() {
                     </td>
                     <td className="px-2 py-1 text-center">
                       {isEdit ? (
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-1 items-center">
                           {editInputs.savings_withdraw > 0 ? (
                             <input
                               type="number"
@@ -414,6 +475,9 @@ function PayrollHistoryPage() {
                             value={editInputs.savings_remark}
                             onChange={(e) => setEditInputs({ ...editInputs, savings_remark: e.target.value })}
                           />
+                          <span className="text-xs whitespace-nowrap">
+                            ยอดสะสม {vals.savingsBalance.toFixed(2)}
+                          </span>
                         </div>
                       ) : (
                         <>
@@ -421,6 +485,9 @@ function PayrollHistoryPage() {
                           {p.savings_withdraw > 0 && `ถอน ${Number(p.savings_withdraw).toFixed(2)}`}
                           {p.savings_deposit === 0 && p.savings_withdraw === 0 && '-'}
                           {p.savings_remark && ` หมายเหตุ: ${p.savings_remark}`}
+                          {typeof savingsBalances[p.id] === 'number' && (
+                            <span className="block text-xs">ยอดสะสม {(savingsBalances[p.id] + (parseFloat(p.savings_deposit) || 0) - (parseFloat(p.savings_withdraw) || 0)).toFixed(2)}</span>
+                          )}
                         </>
                       )}
                     </td>
@@ -490,7 +557,13 @@ function PayrollHistoryPage() {
                           bonus_count: p.bonus_count,
                           ot_hours: p.ot_hours,
                           sunday_days: p.sunday_days,
-                          advance_details: p.advance_details ? p.advance_details.map((a) => ({ ...a })) : [],
+                          advance_details: p.advance_details
+                            ? p.advance_details.map((a) => ({
+                                ...a,
+                                base_remaining:
+                                  parseFloat(a.remaining) + parseFloat(a.amount),
+                              }))
+                            : [],
                           savings_deposit: p.savings_deposit,
                           savings_withdraw: p.savings_withdraw,
                           savings_remark: p.savings_remark || '',
