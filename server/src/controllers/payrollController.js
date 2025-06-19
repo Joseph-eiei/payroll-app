@@ -1,5 +1,7 @@
 const pool = require('../config/db');
 
+const DEDUCTION_CAP = 750; // maximum amount for each deduction type
+
 function calcWorkTime(checkIn, checkOut) {
   if (!checkIn || !checkOut) return { days: 0, hours: 0 };
   const start = new Date(`1970-01-01T${checkIn}Z`);
@@ -174,7 +176,8 @@ exports.getMonthlyPayroll = async (req, res) => {
       const baseForDeduction = details.basePay + details.otPay;
       for (const d of deductionTypes) {
         const rate = parseFloat(d.rate) || 0;
-        const amount = (baseForDeduction * rate) / 100;
+        let amount = (baseForDeduction * rate) / 100;
+        amount = Math.min(amount, DEDUCTION_CAP);
         otherDed += amount;
         deductionDetails.push({ name: d.name, amount: parseFloat(amount.toFixed(2)) });
       }
@@ -256,7 +259,8 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
       const baseForDeduction = monthly.basePay + monthly.otPay;
       for (const d of deductionTypes) {
         const rate = parseFloat(d.rate) || 0;
-        const amount = (baseForDeduction * rate) / 100;
+        let amount = (baseForDeduction * rate) / 100;
+        amount = Math.min(amount, DEDUCTION_CAP);
         otherDed += amount;
         deductionDetails.push({ name: d.name, amount: parseFloat(amount.toFixed(2)) });
       }
@@ -346,7 +350,8 @@ exports.recordMonthlyPayroll = async (req, res) => {
     let otherDed = 0;
     for (const d of deductionTypes) {
       const rate = parseFloat(d.rate) || 0;
-      const amount = ((details.basePay + details.otPay) * rate) / 100;
+      let amount = ((details.basePay + details.otPay) * rate) / 100;
+      amount = Math.min(amount, DEDUCTION_CAP);
       otherDed += amount;
     }
 
@@ -479,7 +484,8 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
     let otherDed = 0;
     for (const d of deductionTypes) {
       const rate = parseFloat(d.rate) || 0;
-      const amount = ((monthly.basePay + monthly.otPay) * rate) / 100;
+      let amount = ((monthly.basePay + monthly.otPay) * rate) / 100;
+      amount = Math.min(amount, DEDUCTION_CAP);
       otherDed += amount;
     }
 
@@ -594,7 +600,8 @@ exports.getMonthlyHistory = async (req, res) => {
       const base = parseFloat(r.base_pay) + parseFloat(r.ot_pay);
       r.deduction_details = types.map((t) => {
         const rate = parseFloat(t.rate) || 0;
-        const amt = (base * rate) / 100;
+        let amt = (base * rate) / 100;
+        amt = Math.min(amt, DEDUCTION_CAP);
         return { name: t.name, amount: parseFloat(amt.toFixed(2)) };
       });
 
@@ -682,7 +689,8 @@ exports.getSemiMonthlyHistory = async (req, res) => {
 
       r.deduction_details = types.map((t) => {
         const rate = parseFloat(t.rate) || 0;
-        const amt = (monthlyBase * rate) / 100;
+        let amt = (monthlyBase * rate) / 100;
+        amt = Math.min(amt, DEDUCTION_CAP);
         return { name: t.name, amount: parseFloat(amt.toFixed(2)) };
       });
 
@@ -836,7 +844,9 @@ exports.updateMonthlyRecord = async (req, res) => {
     let otherDed = 0;
     for (const d of types) {
       const rate = parseFloat(d.rate) || 0;
-      otherDed += ((computed.basePay + computed.otPay) * rate) / 100;
+      let amount = ((computed.basePay + computed.otPay) * rate) / 100;
+      amount = Math.min(amount, DEDUCTION_CAP);
+      otherDed += amount;
     }
 
     const { rows: adv } = await pool.query(
@@ -1014,7 +1024,9 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
     let otherDed = 0;
     for (const d of types) {
       const rate = parseFloat(d.rate) || 0;
-      otherDed += (monthlyBaseOt * rate) / 100;
+      let amount = (monthlyBaseOt * rate) / 100;
+      amount = Math.min(amount, DEDUCTION_CAP);
+      otherDed += amount;
     }
 
     const { rows: adv } = await pool.query(
@@ -1077,7 +1089,9 @@ exports.updateSemiMonthlyRecord = async (req, res) => {
       let otherDed2 = 0;
       for (const d of types) {
         const rate = parseFloat(d.rate) || 0;
-        otherDed2 += (monthlyBaseOt * rate) / 100;
+        let amount = (monthlyBaseOt * rate) / 100;
+        amount = Math.min(amount, DEDUCTION_CAP);
+        otherDed2 += amount;
       }
 
       const { rows: adv2 } = await pool.query(
