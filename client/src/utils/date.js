@@ -26,3 +26,16 @@ export function getNextMonth(monthStr) {
   date.setMonth(date.getMonth() + 1);
   return date.toISOString().slice(0, 7);
 }
+
+export function isoToDDMMYYYY(isoStr) {
+  if (!isoStr) return '';
+  const [year, month, day] = isoStr.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+export function ddmmyyyyToIso(ddmmyyyy) {
+  if (!ddmmyyyy) return '';
+  const [day, month, year] = ddmmyyyy.split('/');
+  if (!day || !month || !year) return '';
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
