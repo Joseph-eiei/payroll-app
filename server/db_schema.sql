@@ -30,7 +30,6 @@ CREATE TABLE employees (
     water_address TEXT,
     electric_address TEXT,
     supervisor_admin_id INTEGER REFERENCES Admins(id)
-
 );
 
 -- Table storing attendance form header data
