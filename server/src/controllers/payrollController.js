@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { isSuperuser } = require('../utils/permissions');
 
 const DEDUCTION_CAP = 750; // maximum amount for each deduction type
 
@@ -137,16 +138,22 @@ exports.getMonthlyPayroll = async (req, res) => {
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
 
   try {
-    const { rows: employees } = await pool.query(
-      `SELECT * FROM Employees
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
+    let query = `SELECT * FROM Employees
         WHERE payment_cycle='รายเดือน'
           AND id NOT IN (
             SELECT employee_id FROM PayrollRecords
             WHERE to_char(pay_month, 'YYYY-MM')=$1
-          )
-        ORDER BY id`,
-      [month]
-    );
+          )`;
+    const params = [month];
+    if (!superuser) {
+      query += ' AND supervisor_admin_id=$2';
+      params.push(adminId);
+    }
+    query += ' ORDER BY id';
+    const { rows: employees } = await pool.query(query, params);
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
     );
@@ -232,16 +239,22 @@ exports.getSemiMonthlyPayroll = async (req, res) => {
   const rangeEnd = period === 'first' ? midDate : monthEnd;
 
   try {
-    const { rows: employees } = await pool.query(
-      `SELECT * FROM Employees
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
+    let query = `SELECT * FROM Employees
         WHERE payment_cycle='ครึ่งเดือน'
           AND id NOT IN (
             SELECT employee_id FROM HalfPayrollRecords
             WHERE to_char(pay_month, 'YYYY-MM')=$1 AND period=$2
-          )
-        ORDER BY id`,
-      [month, period]
-    );
+          )`;
+    const params = [month, period];
+    if (!superuser) {
+      query += ' AND supervisor_admin_id=$3';
+      params.push(adminId);
+    }
+    query += ' ORDER BY id';
+    const { rows: employees } = await pool.query(query, params);
     const { rows: deductionTypes } = await pool.query(
       'SELECT name, rate FROM DeductionTypes WHERE is_active=true ORDER BY id'
     );
@@ -586,15 +599,21 @@ exports.recordSemiMonthlyPayroll = async (req, res) => {
 exports.getMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   try {
-    const { rows } = await pool.query(
-      `SELECT p.*, COALESCE(p.daily_wage, e.daily_wage) AS daily_wage,
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
+    let query = `SELECT p.*, COALESCE(p.daily_wage, e.daily_wage) AS daily_wage,
               e.first_name, e.last_name, e.nickname, e.nationality,
               e.bank_name, e.bank_account_number, e.bank_account_name
        FROM PayrollRecords p
        JOIN Employees e ON p.employee_id = e.id
-       WHERE to_char(p.pay_month, 'YYYY-MM') = $1`,
-      [month]
-    );
+       WHERE to_char(p.pay_month, 'YYYY-MM') = $1`;
+    const params = [month];
+    if (!superuser) {
+      query += ' AND e.supervisor_admin_id=$2';
+      params.push(adminId);
+    }
+    const { rows } = await pool.query(query, params);
 
     const { rows: types } = await pool.query(
       'SELECT name, rate FROM DeductionTypes ORDER BY id'
@@ -659,6 +678,9 @@ exports.getSemiMonthlyHistory = async (req, res) => {
   const month = req.query.month || new Date().toISOString().slice(0, 7);
   const period = req.query.period;
   try {
+    const adminId = req.admin.id;
+    const superuser = await isSuperuser(adminId);
+
     let query =
       `SELECT h.*, COALESCE(h.daily_wage, e.daily_wage) AS daily_wage,
               e.first_name, e.last_name, e.nickname, e.nationality,
@@ -668,8 +690,12 @@ exports.getSemiMonthlyHistory = async (req, res) => {
        WHERE to_char(h.pay_month, 'YYYY-MM') = $1`;
     const params = [month];
     if (period === 'first' || period === 'second') {
-      query += ' AND h.period=$2';
+      query += ' AND h.period=$' + (params.length + 1);
       params.push(period);
+    }
+    if (!superuser) {
+      query += ' AND e.supervisor_admin_id=$' + (params.length + 1);
+      params.push(adminId);
     }
     const { rows } = await pool.query(query, params);
 
